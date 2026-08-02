@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>日本行程表 & 氣象廳天氣資訊</title>
+  <style>
+    :root {
+      --primary-color: #d9383a; /* 日本緋紅色 */
+      --bg-color: #f7f9fa;
+      --card-bg: #ffffff;
+      --text-color: #2c3e50;
+      --border-color: #e2e8f0;
+      --accent-blue: #2b6cb0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      line-height: 1.6;
+      padding: 20px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 25px;
+      padding: 20px;
+      background: var(--card-bg);
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+
+    h1 {
+      color: var(--primary-color);
+      font-size: 1.8rem;
+      margin-bottom: 8px;
+    }
+
+    /* 天氣區塊 (日本氣象廳 JMA API) */
+    .weather-widget {
+      background: linear-gradient(135deg, #ebf8ff 0%, #bee3f8 100%);
+      border: 1px solid #90cdf4;
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 25px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .weather-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .weather-title {
+      font-weight: bold;
+      color: var(--accent-blue);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .region-select {
+      padding: 5px 10px;
+      border-radius: 6px;
+      border: 1px solid #a0aec0;
+      background: white;
+      font-size: 0.9rem;
+    }
+
+    .weather-content {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+
+    .weather-card {
+      background: rgba(255, 255, 255, 0.85);
+      padding: 12px;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .weather-date {
+      font-size: 0.85rem;
+      color: #4a5568;
+      font-weight: bold;
+    }
+
+    .weather-desc {
+      font-size: 1rem;
+      margin: 4px 0;
+      color: #2d3748;
+    }
+
+    .weather-temp {
+      font-size: 0.9rem;
+      color: #e53e3e;
+      font-weight: bold;
+    }
+
+    /* 行程表區塊 */
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .day-card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+    }
+
+    .day-header {
+      background: var(--primary-color);
+      color: white;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .day-title {
+      font-size: 1.1rem;
+      font-weight: bold;
+    }
+
+    .day-date {
+      font-size: 0.95rem;
+      opacity: 0.9;
+    }
+
+    .schedule-list {
+      padding: 15px 20px;
+      list-style: none;
+    }
+
+    .schedule-item {
+      display: flex;
+      gap: 15px;
+      padding: 10px 0;
+      border-bottom: 1px dashed var(--border-color);
+    }
+
+    .schedule-item:last-child {
+      border-bottom: none;
+    }
+
+    .time {
+      font-weight: bold;
+      color: var(--accent-blue);
+      min-width: 60px;
+    }
+
+    .activity {
+      flex-grow: 1;
+    }
+
+    .location-tag {
+      display: inline-block;
+      background: #edf2f7;
+      color: #4a5568;
+      font-size: 0.8rem;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-top: 4px;
+    }
+
+    .note {
+      font-size: 0.85rem;
+      color: #718096;
+      margin-top: 2px;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 30px;
+      font-size: 0.85rem;
+      color: #a0aec0;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🇯🇵 日本旅行行程表</h1>
+    <p>資料來源：日本氣象廳 (JMA) 實時天氣 API預報</p>
+  </header>
+
+  <!-- 日本氣象廳天氣組件 -->
+  <section class="weather-widget">
+    <div class="weather-header">
+      <div class="weather-title">
+        ☀️ 日本氣象廳天氣預報
+      </div>
+      <div>
+        <select id="regionSelect" class="region-select" onchange="fetchJMAWeather()">
+          <option value="130000" selected>東京 (Tokyo)</option>
+          <option value="270000">大阪 (Osaka)</option>
+          <option value="260000">京都 (Kyoto)</option>
+          <option value="016000">札幌 (Sapporo)</option>
+          <option value="400000">福岡 (Fukuoka)</option>
+        </select>
+      </div>
+    </div>
+    <div id="weatherContainer" class="weather-content">
+      <div style="grid-column: 1/-1; text-align: center; color: #4a5568;">正在讀取日本氣象廳天氣數據...</div>
+    </div>
+  </section>
+
+  <!-- 行程表 (預設固定天數與日期) -->
+  <main class="timeline">
+
+    <!-- Day 1 -->
+    <div class="day-card">
+      <div class="day-header">
+        <span class="day-title">Day 1</span>
+        <span class="day-date">2026 年 10 月 15 日 (星期四)</span>
+      </div>
+      <ul class="schedule-list">
+        <li class="schedule-item">
+          <span class="time">09:30</span>
+          <div class="activity">
+            <strong>抵達機場 & 辦理入境</strong>
+            <div><span class="location-tag">📍 成田/羽田機場</span></div>
+            <p class="note">提取行李、購買關東 Pass 交通卡。</p>
+          </div>
+        </li>
+        <li class="schedule-item">
+          <span class="time">13:00</span>
+          <div class="activity">
+            <strong>酒店 Check-in / 寄存行李</strong>
+            <div><span class="location-tag">📍 新宿站附近酒店</span></div>
+          </div>
+        </li>
+        <li class="schedule-item">
+          <span class="time">15:00</span>
+          <div class="activity">
+            <strong>明治神宮 & 原宿竹下通散策</strong>
+            <div><span class="location-tag">📍 原宿</span></div>
+            <p class="note">品嚐特色甜品及感受潮流文化。</p>
+          </div>
+        </li>
+        <li class="schedule-item">
+          <span class="time">18:30</span>
+          <div class="activity">
+            <strong>澀谷 Sky 展望台欣賞夜景 & 晚餐</strong>
+            <div><span class="location-tag">📍 澀谷</span></div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Day 2 -->
+    <div class="day-card">
+      <div class="day-header">
+        <span class="day-title">Day 2</span>
+        <span class="day-date">2026 年 10 月 16 日 (星期五)</span>
+      </div>
+      <ul class="schedule-list">
+        <li class="schedule-item">
+          <span class="time">09:00</span>
+          <div class="activity">
+            <strong>淺草寺參拜 & 雷門拍照</strong>
+            <div><span class="location-tag">📍 淺草</span></div>
+          </div>
+        </li>
+        <li class="schedule-item">
+          <span class="time">12:00</span>
+          <div class="activity">
+            <strong>晴空塔 (Tokyo Skytree) & 午餐</strong>
+            <div><span class="location-tag">📍 押上</span></div>
+          </div>
+        </li>
+        <li class="schedule-item">
+          <span class="time">15:30</span>
+          <div class="activity">
+            <strong>銀座商圈購物散步</strong>
+            <div><span class="location-tag">📍 銀座</span></div>
+          </div>
+        </li>
+        <li class="schedule-item">
+          <span class="time">19:00</span>
+          <div class="activity">
+            <strong>高級和牛燒肉晚餐</strong>
+            <div><span class="location-tag">📍 銀座</span></div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Day 3 -->
+    <div class="day-card">
+      <div class="day-header">
+        <span class="day-title">Day 3</span>
+        <span class="day-date">2026 年 10 月 17 日 (星期六)</span>
+      </div>
+      <ul class="schedule-list">
+        <li class="schedule-item">
+          <span class="time">08:30</span>
+          <div class="activity">
+            <strong>前往箱根一日遊 / 乘搭浪漫特快</strong>
+            <div><span class="location-tag">📍 箱根</span></div>
+          </div>
+        </li>
+        <li class="schedule-item">
+          <span class="time">11:30</span>
+          <div class="activity">
+            <strong>蘆之湖海賊船 & 箱根神社水中鳥居</strong>
+            <div><span class="location-tag">📍 元箱根</span></div>
+          </div>
+        </li>
+        <li class="schedule-item">
+          <span class="time">15:00</span>
+          <div class="activity">
+            <strong>大涌谷品嚐黑玉子火山溫泉蛋</strong>
+            <div><span class="location-tag">📍 大涌谷</span></div>
+          </div>
+        </li>
+        <li class="schedule-item">
+          <span class="time">18:00</span>
+          <div class="activity">
+            <strong>返回東京新宿享用拉麵晚餐</strong>
+            <div><span class="location-tag">📍 新宿</span></div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Day 4 -->
+    <div class="day-card">
+      <div class="day-header">
+        <span class="day-title">Day 4</span>
+        <span class="day-date">2026 年 10 月 18 日 (星期日)</span>
+      </div>
+      <ul class="schedule-list">
+        <li class="schedule-item">
+          <span class="time">10:00</span>
+          <div class="activity">
+            <strong>築地場外市場品嚐海鮮丼與玉子燒</strong>
+            <div><span class="location-tag">📍 築地</span></div>
+          </div>
+        </li>
+        <li class="schedule-item">
+          <span class="time">13:30</span>
+          <div class="activity">
+            <strong>台場 teamLab 數位藝術美術館展覽</strong>
+            <div><span class="location-tag">📍 台場</span></div>
+          </div>
+        </li>
+        <li class="schedule-item">
+          <span class="time">17:30</span>
+          <div class="activity">
+            <strong>台場海濱公園自由高達模型點燈 & 夜景</strong>
+            <div><span class="location-tag">📍 台場</span></div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Day 5 -->
+    <div class="day-card">
+      <div class="day-header">
+        <span class="day-title">Day 5</span>
+        <span class="day-date">2026 年 10 月 19 日 (星期一)</span>
+      </div>
+      <ul class="schedule-list">
+        <li class="schedule-item">
+          <span class="time">10:00</span>
+          <div class="activity">
+            <strong>上野公園散步 & 阿美橫丁買伴手禮</strong>
+            <div><span class="location-tag">📍 上野</span></div>
+          </div>
+        </li>
+        <li class="schedule-item">
+          <span class="time">14:00</span>
+          <div class="activity">
+            <strong>返回酒店提取行李前往機場</strong>
+            <div><span class="location-tag">📍 成田/羽田機場</span></div>
+          </div>
+        </li>
+        <li class="schedule-item">
+          <span class="time">17:00</span>
+          <div class="activity">
+            <strong>登機返港，結束美好旅程</strong>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+  </main>
+
+  <footer>
+    <p>Japan Travel Itinerary &copy; 2026 | 天氣數據直接對接日本氣象廳 (JMA)</p>
+  </footer>
+
+  <script>
+    // 自動向日本氣象廳 (JMA) 讀取天氣資訊
+    async function fetchJMAWeather() {
+      const areaCode = document.getElementById('regionSelect').value;
+      const weatherContainer = document.getElementById('weatherContainer');
+      weatherContainer.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #4a5568;">天氣更新中...</div>';
+
+      try {
+        // 日本氣象廳官方預報 API endpoint
+        const response = await fetch(`https://www.jma.go.jp/bosai/forecast/data/forecast/${areaCode}.json`);
+        
+        if (!response.ok) {
+          throw new Error('無法取得日本氣象廳數據');
+        }
+
+        const data = await response.json();
+        
+        // 解析氣象廳數據 (區域預報與氣溫)
+        const areaData = data[0].timeSeries[0];
+        const timeDefines = areaData.timeDefines;
+        const weatherArray = areaData.areas[0].weathers;
+        
+        // 氣溫數據 (從第二組 timeSeries 讀取)
+        let tempArray = [];
+        if (data[0].timeSeries[2] && data[0].timeSeries[2].areas[0].temps) {
+          tempArray = data[0].timeSeries[2].areas[0].temps;
+        }
+
+        let htmlContent = '';
+        
+        // 展示最多 3 天的天氣預報
+        const displayDays = Math.min(timeDefines.length, 3);
+        
+        for (let i = 0; i < displayDays; i++) {
+          const dateObj = new Date(timeDefines[i]);
+          const dateStr = `${dateObj.getMonth() + 1}月${dateObj.getDate()}日`;
+          const weatherText = weatherArray[i] || '未知';
+          
+          // 氣溫標示 (若有氣溫資料)
+          let tempText = '氣溫情報見當地告示';
+          if (tempArray.length >= (i * 2 + 1)) {
+            const minTemp = tempArray[i * 2] || '--';
+            const maxTemp = tempArray[i * 2 + 1] || '--';
+            tempText = `${minTemp}°C - ${maxTemp}°C`;
+          }
+
+          htmlContent += `
+            <div class="weather-card">
+              <div class="weather-date">${dateStr}</div>
+              <div class="weather-desc">${weatherText}</div>
+              <div class="weather-temp">${tempText}</div>
+            </div>
+          `;
+        }
+
+        weatherContainer.innerHTML = htmlContent;
+
+      } catch (error) {
+        console.error('Weather Fetch Error:', error);
+        weatherContainer.innerHTML = `
+          <div style="grid-column: 1/-1; text-align: center; color: #e53e3e;">
+            無法讀取日本氣象廳天氣數據，請檢查網絡連接或稍後再試。
+          </div>
+        `;
+      }
+    }
+
+    // 頁面加載完成後自動讀取天氣
+    document.addEventListener('DOMContentLoaded', () => {
+      fetchJMAWeather();
+    });
+  </script>
+</body>
+</html>
