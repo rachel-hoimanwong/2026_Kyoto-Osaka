@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>🎀 日本之旅行程與記帳小助手</title>
+  
+  <!-- FontAwesome 圖標庫 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- html2canvas 用於生成圖片 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <style>
+    :root {
+      --bg-color: #fef6f8;
+      --card-bg: #ffffff;
+      --primary-pink: #ff85a1;
+      --primary-light: #fbb1bd;
+      --accent-pink: #ff5376;
+      --soft-pink: #ffe5ec;
+      --text-color: #4a3b52;
+      --text-muted: #8d7b94;
+      --border-color: #ffcad4;
+      --shadow: 0 8px 20px rgba(255, 181, 193, 0.25);
+      --radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: #ebd3dc;
+      color: var(--text-color);
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    /* 手機 Viewport 框架 */
+    .app-container {
+      width: 100%;
+      max-width: 480px;
+      background-color: var(--bg-color);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      box-shadow: 0 0 30px rgba(0,0,0,0.1);
+      min-height: 100vh;
+      padding-bottom: 75px;
+    }
+
+    /* 頂部 Header */
+    header {
+      background: linear-gradient(135deg, var(--primary-pink), var(--primary-light));
+      color: white;
+      padding: 16px 20px;
+      border-radius: 0 0 24px 24px;
+      box-shadow: var(--shadow);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    header h1 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .save-status-badge {
+      background: rgba(255, 255, 255, 0.25);
+      backdrop-filter: blur(4px);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.3s ease;
+    }
+
+    /* 內容分頁 container */
+    .tab-content {
+      display: none;
+      padding: 16px;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* 可愛卡片樣式 */
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(255, 202, 212, 0.4);
+      position: relative;
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--accent-pink);
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* 行程表 - 日期滑動按鈕 */
+    .day-selector {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+      scrollbar-width: none;
+    }
+    .day-selector::-webkit-scrollbar { display: none; }
+
+    .day-btn {
+      background: var(--soft-pink);
+      color: var(--text-color);
+      border: 1px solid var(--border-color);
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .day-btn.active {
+      background: var(--primary-pink);
+      color: white;
+      border-color: var(--primary-pink);
+      box-shadow: 0 4px 10px rgba(255, 133, 161, 0.4);
+    }
+
+    /* 天氣小卡 */
+    .weather-card {
+      background: linear-gradient(120deg, #fff5f7, #ffe3eb);
+      border-radius: 14px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      font-size: 0.85rem;
+    }
+
+    /* 行程時間軸 */
+    .timeline-item {
+      position: relative;
+      padding-left: 24px;
+      margin-bottom: 16px;
+      border-left: 2px dashed var(--primary-light);
+    }
+    .timeline-item::before {
+      content: '🌸';
+      position: absolute;
+      left: -12px;
+      top: -2px;
+      font-size: 0.8rem;
+    }
+
+    .item-time {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--primary-pink);
+    }
+
+    .item-location {
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin: 2px 0 4px 0;
+    }
+
+    .map-link-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #e8f4ff;
+      color: #2b7fff;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      text-decoration: none;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    .transit-info {
+      background: #fcf8f2;
+      border-left: 3px solid #f7c568;
+      padding: 6px 10px;
+      border-radius: 0 8px 8px 0;
+      font-size: 0.8rem;
+      color: #7a6336;
+      margin-top: 6px;
+    }
+
+    /* 表單控件 */
+    .form-group {
+      margin-bottom: 12px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: var(--text-color);
+    }
+    .form-control {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      font-size: 0.9rem;
+      background-color: #fff;
+      outline: none;
+    }
+    .form-control:focus {
+      border-color: var(--primary-pink);
+      box-shadow: 0 0 0 3px rgba(255, 133, 161, 0.2);
+    }
+
+    /* 可愛通用按鈕 */
+    .btn {
+      background: var(--primary-pink);
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      width: 100%;
+      box-shadow: 0 4px 12px rgba(255, 133, 161, 0.3);
+      transition: transform 0.1s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-secondary {
+      background: var(--soft-pink);
+      color: var(--accent-pink);
+      box-shadow: none;
+    }
+    .btn-danger {
+      background: #ff6b6b;
+      color: white;
+      box-shadow: none;
+    }
+
+    /* 記帳列表與劃線已結清 */
+    .expense-item {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 12px 0;
+      border-bottom: 1px dashed var(--border-color);
+    }
+    .expense-item.settled {
+      opacity: 0.55;
+    }
+    .expense-item.settled .expense-title,
+    .expense-item.settled .expense-amount {
+      text-decoration: line-through;
+    }
+
+    .expense-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .expense-title {
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+    .expense-amount {
+      font-weight: 800;
+      color: var(--accent-pink);
+      font-size: 1rem;
+    }
+    .expense-meta {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* 人員權重分帳輸入框 */
+    .split-person-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .split-person-row span {
+      font-size: 0.85rem;
+      width: 70px;
+    }
+
+    /* 結算報告區 */
+    .settlement-card {
+      background: linear-gradient(135deg, #ffffff, #fff7f9);
+      border: 2px solid var(--primary-light);
+    }
+    .settlement-line {
+      padding: 8px 12px;
+      background: var(--soft-pink);
+      border-radius: 10px;
+      margin-bottom: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-color);
+    }
+
+    /* 底部 Tab 導航欄 */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      max-width: 480px;
+      background: white;
+      display: flex;
+      justify-content: space-around;
+      padding: 8px 0;
+      border-radius: 20px 20px 0 0;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
+      z-index: 100;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      width: 25%;
+    }
+    .nav-item i {
+      font-size: 1.2rem;
+    }
+    .nav-item.active {
+      color: var(--accent-pink);
+    }
+
+    /* Modal 彈窗 */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.4);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      padding: 16px;
+    }
+    .modal-overlay.active {
+      display: flex;
+    }
+    .modal-box {
+      background: white;
+      border-radius: var(--radius);
+      padding: 20px;
+      width: 100%;
+      max-width: 400px;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    .pill-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      background: var(--soft-pink);
+      color: var(--accent-pink);
+    }
+
+    /* 快捷按鈕組 */
+    .flex-gap {
+      display: flex;
+      gap: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header>
+      <h1><span>🌸</span> 日本旅行小助手</h1>
+      <div class="save-status-badge" id="save-status">
+        <span>💾</span> <span id="save-status-text">已自動儲存</span>
+      </div>
+    </header>
+
+    <!-- Tab 1: 行程表 (含地圖與交通資訊) -->
+    <div id="tab-schedule" class="tab-content active">
+      <div class="day-selector" id="day-buttons-container">
+        <!-- 動態生成 Day 按鈕 -->
+      </div>
+
+      <div class="card weather-card">
+        <div>
+          <span style="font-size: 0.75rem; color: var(--text-muted);" id="current-day-date">2026-08-10</span>
+          <div style="font-weight: 700; font-size: 0.95rem;" id="weather-text">☀️ 26°C 晴朗舒適</div>
+        </div>
+        <button class="btn btn-secondary" style="width: auto; padding: 4px 10px; font-size: 0.75rem;" onclick="editWeather()">修改天氣</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span>📍 今日行程安排</span>
+          <button class="btn" style="width: auto; padding: 6px 12px; font-size: 0.75rem;" onclick="openAddScheduleModal()">+ 新增地點</button>
+        </div>
+        <div id="schedule-timeline-list">
+          <!-- 動態渲染行程列表 -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 2: 記帳與分帳功能 -->
+    <div id="tab-expense" class="tab-content">
+      <!-- 參與成員設定 -->
+      <div class="card">
+        <div class="card-title">
+          <span>👥 參與成員 (最多 4 人)</span>
+          <button class="btn btn-secondary" style="width: auto; padding: 4px 10px; font-size: 0.75rem;" onclick="editParticipants()">編輯成員名字</button>
+        </div>
+        <div id="participants-display-tags" class="flex-gap" style="flex-wrap: wrap;">
+          <!-- 顯示成員 Pill -->
+        </div>
+      </div>
+
+      <!-- 記帳卡片列表 -->
+      <div class="card">
+        <div class="card-title">
+          <span>💵 支出明細項目</span>
+          <button class="btn" style="width: auto; padding: 6px 12px; font-size: 0.75rem;" onclick="openAddExpenseModal()">+ 新增記帳</button>
+        </div>
+        <div id="expense-items-list">
+          <!-- 動態渲染記帳列表 -->
+        </div>
+      </div>
+
+      <!-- 統一結算卡片 -->
+      <div class="card settlement-card">
+        <div class="card-title">
+          <span>📊 未結清帳目統一結算</span>
+          <button class="btn btn-secondary" style="width: auto; padding: 4px 10px; font-size: 0.75rem;" onclick="settleAllUnsettled()">一鍵劃線結清</button>
+        </div>
+        <div id="settlement-results-container">
+          <!-- 計算結果顯示區域 -->
+        </div>
+      </div>
+
+      <!-- 結算歷史與匯出區 -->
+      <div class="card" id="settlement-report-card">
+        <div class="card-title">
+          <span>📜 最終帳單報告與匯出</span>
+        </div>
+        <div id="settlement-history-logs" style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">
+          <!-- 歷次結清時間紀錄 -->
+        </div>
+        <div class="flex-gap">
+          <button class="btn btn-secondary" onclick="exportTextReport()"><i class="fa-regular fa-copy"></i> 複製文字帳單</button>
+          <button class="btn" onclick="exportImageReport()"><i class="fa-regular fa-image"></i> 匯出圖片帳單</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 3: 雙向匯率計算器 -->
+    <div id="tab-converter" class="tab-content">
+      <div class="card">
+        <div class="card-title">
+          <span>💱 雙向匯率換算器</span>
+        </div>
+        <div class="form-group">
+          <label>當前設定匯率 (100 JPY 等於多少 HKD):</label>
+          <input type="number" step="0.01" class="form-control" id="exchange-rate-input" value="5.2" oninput="updateExchangeRate(this.value)">
+        </div>
+
+        <div style="background: var(--soft-pink); padding: 14px; border-radius: 14px; margin-top: 10px;">
+          <div class="form-group">
+            <label>日圓 (JPY ¥)</label>
+            <input type="number" class="form-control" id="calc-jpy" placeholder="0" oninput="convertCurrency('JPY')">
+          </div>
+          <div style="text-align: center; margin: 8px 0; color: var(--accent-pink);">
+            <i class="fa-solid fa-arrows-up-down"></i>
+          </div>
+          <div class="form-group">
+            <label>港幣 (HKD $)</label>
+            <input type="number" class="form-control" id="calc-hkd" placeholder="0" oninput="convertCurrency('HKD')">
+          </div>
+        </div>
+
+        <div style="margin-top: 14px; display: flex; gap: 8px; flex-wrap: wrap;">
+          <button class="btn btn-secondary" style="width: auto; flex: 1;" onclick="quickConvertJPY(1000)">1,000日圓</button>
+          <button class="btn btn-secondary" style="width: auto; flex: 1;" onclick="quickConvertJPY(5000)">5,000日圓</button>
+          <button class="btn btn-secondary" style="width: auto; flex: 1;" onclick="quickConvertJPY(10000)">10,000日圓</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 4: 系統與備份設定 -->
+    <div id="tab-settings" class="tab-content">
+      <div class="card">
+        <div class="card-title">
+          <span>⚙️ 資料管理與還原</span>
+        </div>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">
+          所有輸入資料均會實時自動備份至瀏覽器 localStorage (版本: v<span id="app-version-display">1.0</span>)。
+        </p>
+        <div class="form-group">
+          <button class="btn btn-secondary" style="margin-bottom: 8px;" onclick="addNewDay()">+ 新增行程天數</button>
+          <button class="btn btn-danger" onclick="clearAllData()">⚠️ 重置所有資料</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 底部 Tab Bar -->
+    <nav class="bottom-nav">
+      <div class="nav-item active" onclick="switchTab('schedule', this)">
+        <i class="fa-solid fa-calendar-days"></i>
+        <span>行程</span>
+      </div>
+      <div class="nav-item" onclick="switchTab('expense', this)">
+        <i class="fa-solid fa-receipt"></i>
+        <span>記帳分帳</span>
+      </div>
+      <div class="nav-item" onclick="switchTab('converter', this)">
+        <i class="fa-solid fa-calculator"></i>
+        <span>匯率換算</span>
+      </div>
+      <div class="nav-item" onclick="switchTab('settings', this)">
+        <i class="fa-solid fa-gear"></i>
+        <span>設定</span>
+      </div>
+    </nav>
+  </div>
+
+  <!-- Modal: 新增/編輯行程 -->
+  <div class="modal-overlay" id="modal-schedule">
+    <div class="modal-box">
+      <h3 style="margin-bottom: 12px; color: var(--accent-pink);" id="modal-schedule-title">新增行程地點</h3>
+      <input type="hidden" id="sched-id">
+      <div class="form-group">
+        <label>預計時間</label>
+        <input type="time" class="form-control" id="sched-time" value="10:00">
+      </div>
+      <div class="form-group">
+        <label>地點名稱</label>
+        <input type="text" class="form-control" id="sched-name" placeholder="例如：新宿一蘭拉麵">
+      </div>
+      <div class="form-group">
+        <label>Google Map 導航連結 (可空貼)</label>
+        <input type="url" class="form-control" id="sched-map" placeholder="https://maps.google.com/...">
+      </div>
+      <div class="form-group">
+        <label>精確交通說明 (Exit/出口說明)</label>
+        <input type="text" class="form-control" id="sched-transit" placeholder="例如：由 JR 新宿站 東口 離開，步行 5 分鐘">
+      </div>
+      <div class="flex-gap" style="margin-top: 16px;">
+        <button class="btn btn-secondary" onclick="closeModal('modal-schedule')">取消</button>
+        <button class="btn" onclick="saveScheduleItem()">儲存行程</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: 新增/編輯記帳 -->
+  <div class="modal-overlay" id="modal-expense">
+    <div class="modal-box">
+      <h3 style="margin-bottom: 12px; color: var(--accent-pink);">新增記帳項目</h3>
+      <input type="hidden" id="exp-id">
+      <div class="form-group">
+        <label>項目名稱</label>
+        <input type="text" class="form-control" id="exp-title" placeholder="例如：築地市場海鮮丼午餐">
+      </div>
+      <div class="form-group">
+        <label>金額與幣種</label>
+        <div class="flex-gap">
+          <input type="number" class="form-control" id="exp-amount" placeholder="0" style="flex: 2;">
+          <select class="form-control" id="exp-currency" style="flex: 1;">
+            <option value="JPY">日圓 JPY</option>
+            <option value="HKD">港幣 HKD</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>付款方式</label>
+        <select class="form-control" id="exp-method">
+          <option value="現金">現金 Cash</option>
+          <option value="信用卡">信用卡 Credit Card</option>
+          <option value="Suica/IC卡">Suica / IC 卡</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>誰先付款 (付款人)</label>
+        <select class="form-control" id="exp-paid-by">
+          <!-- 動態填充成員 -->
+        </select>
+      </div>
+      <div class="form-group">
+        <label>分帳模式</label>
+        <select class="form-control" id="exp-split-type" onchange="toggleSplitTypeUI()">
+          <option value="equal">人均 (整除均分)</option>
+          <option value="custom">分開付 (自訂個別金額)</option>
+        </select>
+      </div>
+
+      <!-- 分帳詳細選擇 UI -->
+      <div class="form-group" style="background: var(--soft-pink); padding: 10px; border-radius: 12px;">
+        <label>參與分帳人員及金額：</label>
+        <div id="split-participants-container">
+          <!-- 動態渲染參與者選項 -->
+        </div>
+      </div>
+
+      <div class="flex-gap" style="margin-top: 16px;">
+        <button class="btn btn-secondary" onclick="closeModal('modal-expense')">取消</button>
+        <button class="btn" onclick="saveExpenseItem()">儲存記帳</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // 1. 全局 State 與 LocalStorage 核心機制
+    // ==========================================
+    const STORAGE_KEY = "JAPAN_TRIP_APP_DATA_V1";
+    const CURRENT_VERSION = "1.0";
+
+    // 預設資料結構
+    let appData = {
+      version: CURRENT_VERSION,
+      activeDayIndex: 0,
+      exchangeRate: 5.2, // 100 JPY = 5.2 HKD
+      participants: ["小桃", "小櫻", "小葵", "小莓"],
+      days: [
+        {
+          date: "2026-08-10",
+          weather: "☀️ 26°C 晴朗舒適",
+          items: [
+            {
+              id: "sched_1",
+              time: "10:30",
+              name: "成田機場 到達",
+              map: "https://www.google.com/maps/search/?api=1&query=Narita+Airport",
+              transit: "由 Terminal 1 京成電鐵 A3 出口離開，搭乘 Skyliner"
+            },
+            {
+              id: "sched_2",
+              time: "13:00",
+              name: "新宿一蘭拉麵",
+              map: "https://www.google.com/maps/search/?api=1&query=Ichiran+Shinjuku",
+              transit: "由 JR 新宿站 東口 出口離開，步行 3 分鐘"
+            }
+          ]
+        },
+        {
+          date: "2026-08-11",
+          weather: "🌦️ 22°C 時有微雨",
+          items: []
+        }
+      ],
+      expenses: [
+        {
+          id: "exp_1",
+          title: "一蘭拉麵午餐",
+          amount: 5000,
+          currency: "JPY",
+          method: "現金",
+          paidBy: "小桃",
+          splitType: "equal",
+          participants: ["小桃", "小櫻", "小葵", "小莓"],
+          customAmounts: {},
+          settled: false,
+          date: "2026-08-10"
+        }
+      ],
+      settlementLogs: []
+    };
+
+    // 自動儲存至 localStorage
+    function saveData() {
+      try {
+        appData.version = CURRENT_VERSION;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+        showSaveStatus("💾 已自動儲存");
+      } catch (e) {
+        showSaveStatus("⚠️ 儲存失敗");
+        console.error("Storage Error:", e);
+      }
+    }
+
+    // 從 localStorage 載入資料
+    function loadData() {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (parsed && parsed.version === CURRENT_VERSION) {
+            appData = parsed;
+            showSaveStatus("💾 已載入紀錄");
+          }
+        } catch (e) {
+          console.error("Load Error:", e);
+        }
+      } else {
+        saveData(); // 初始化儲存
+      }
+    }
+
+    function showSaveStatus(text) {
+      const badge = document.getElementById("save-status-text");
+      if (badge) badge.innerText = text;
+    }
+
+    // ==========================================
+    // 2. Tab 切換機制
+    // ==========================================
+    function switchTab(tabId, el) {
+      document.querySelectorAll(".tab-content").forEach(tab => tab.classList.remove("active"));
+      document.querySelectorAll(".nav-item").forEach(item => item.classList.remove("active"));
+      
+      document.getElementById(`tab-${tabId}`).classList.add("active");
+      if (el) el.classList.add("active");
+
+      if (tabId === 'expense') renderExpenseTab();
+    }
+
+    // ==========================================
+    // 3. 行程表邏輯 (Tab 1)
+    // ==========================================
+    function renderScheduleTab() {
+      // 渲染 Day 按鈕
+      const container = document.getElementById("day-buttons-container");
+      container.innerHTML = "";
+      
+      appData.days.forEach((day, index) => {
+        const btn = document.createElement("button");
+        btn.className = `day-btn ${index === appData.activeDayIndex ? 'active' : ''}`;
+        btn.innerText = `Day ${index + 1} (${day.date.slice(5)})`;
+        btn.onclick = () => {
+          appData.activeDayIndex = index;
+          saveData();
+          renderScheduleTab();
+        };
+        container.appendChild(btn);
+      });
+
+      const currentDay = appData.days[appData.activeDayIndex] || appData.days[0];
+      document.getElementById("current-day-date").innerText = currentDay.date;
+      document.getElementById("weather-text").innerText = currentDay.weather || "☀️ 25°C 晴朗";
+
+      // 渲染行程時間軸
+      const timeline = document.getElementById("schedule-timeline-list");
+      timeline.innerHTML = "";
+
+      if (!currentDay.items || currentDay.items.length === 0) {
+        timeline.innerHTML = `<p style="font-size:0.85rem; color:var(--text-muted); text-align:center; padding:20px 0;">今日尚未新增行程哦 🌸</p>`;
+        return;
+      }
+
+      currentDay.items.forEach((item, idx) => {
+        const mapBtnHTML = item.map ? 
+          `<a href="${item.map}" target="_blank" class="map-link-btn"><i class="fa-solid fa-map-location-dot"></i> Google Map 導航</a>` : '';
+        
+        const transitHTML = item.transit ? 
+          `<div class="transit-info"><i class="fa-solid fa-train-subway"></i> ${item.transit}</div>` : '';
+
+        const itemDiv = document.createElement("div");
+        itemDiv.className = "timeline-item";
+        itemDiv.innerHTML = `
+          <div style="display:flex; justify-content:space-between;">
+            <span class="item-time">${item.time}</span>
+            <div>
+              <i class="fa-solid fa-pen" style="color:var(--text-muted); font-size:0.75rem; cursor:pointer; margin-right:8px;" onclick="editScheduleItem(${idx})"></i>
+              <i class="fa-solid fa-trash" style="color:#ff6b6b; font-size:0.75rem; cursor:pointer;" onclick="deleteScheduleItem(${idx})"></i>
+            </div>
+          </div>
+          <div class="item-location">${item.name}</div>
+          ${mapBtnHTML}
+          ${transitHTML}
+        `;
+        timeline.appendChild(itemDiv);
+      });
+    }
+
+    function editWeather() {
+      const currentDay = appData.days[appData.activeDayIndex];
+      const newWeather = prompt("輸入當天天氣 (例如：☀️ 26°C 晴天):", currentDay.weather);
+      if (newWeather !== null) {
+        currentDay.weather = newWeather;
+        saveData();
+        renderScheduleTab();
+      }
+    }
+
+    function openAddScheduleModal() {
+      document.getElementById("sched-id").value = "";
+      document.getElementById("sched-time").value = "12:00";
+      document.getElementById("sched-name").value = "";
+      document.getElementById("sched-map").value = "";
+      document.getElementById("sched-transit").value = "";
+      document.getElementById("modal-schedule-title").innerText = "新增行程地點";
+      document.getElementById("modal-schedule").classList.add("active");
+    }
+
+    function editScheduleItem(idx) {
+      const item = appData.days[appData.activeDayIndex].items[idx];
+      document.getElementById("sched-id").value = idx;
+      document.getElementById("sched-time").value = item.time;
+      document.getElementById("sched-name").value = item.name;
+      document.getElementById("sched-map").value = item.map || "";
+      document.getElementById("sched-transit").value = item.transit || "";
+      document.getElementById("modal-schedule-title").innerText = "編輯行程地點";
+      document.getElementById("modal-schedule").classList.add("active");
+    }
+
+    function saveScheduleItem() {
+      const idx = document.getElementById("sched-id").value;
+      const time = document.getElementById("sched-time").value;
+      const name = document.getElementById("sched-name").value.trim();
+      let map = document.getElementById("sched-map").value.trim();
+      const transit = document.getElementById("sched-transit").value.trim();
+
+      if (!name) {
+        alert("請輸入地點名稱！");
+        return;
+      }
+
+      // 自動補全 Google Map 搜尋連結
+      if (!map) {
+        map = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name)}`;
+      }
+
+      const newItem = { id: "sched_" + Date.now(), time, name, map, transit };
+      const currentItems = appData.days[appData.activeDayIndex].items;
+
+      if (idx === "") {
+        currentItems.push(newItem);
+      } else {
+        currentItems[idx] = newItem;
+      }
+
+      // 按時間排序
+      currentItems.sort((a, b) => a.time.localeCompare(b.time));
+
+      saveData();
+      closeModal("modal-schedule");
+      renderScheduleTab();
+    }
+
+    function deleteScheduleItem(idx) {
+      if (confirm("確定要刪除這個行程地點嗎？")) {
+        appData.days[appData.activeDayIndex].items.splice(idx, 1);
+        saveData();
+        renderScheduleTab();
+      }
+    }
+
+    // ==========================================
+    // 4. 記帳與分帳功能 (Tab 2)
+    // ==========================================
+    function renderExpenseTab() {
+      // 1. 渲染成員 Tag
+      const pTags = document.getElementById("participants-display-tags");
+      pTags.innerHTML = appData.participants.map(p => `<span class="pill-badge">👤 ${p}</span>`).join("");
+
+      // 2. 渲染記帳明細列表
+      const expList = document.getElementById("expense-items-list");
+      expList.innerHTML = "";
+
+      if (appData.expenses.length === 0) {
+        expList.innerHTML = `<p style="font-size:0.85rem; color:var(--text-muted); text-align:center; padding:15px 0;">暫無記帳項目 💰</p>`;
+      } else {
+        appData.expenses.forEach((item, index) => {
+          const div = document.createElement("div");
+          div.className = `expense-item ${item.settled ? 'settled' : ''}`;
+          
+          const splitLabel = item.splitType === 'equal' ? '人均分帳' : '自訂分帳';
+          const convHKD = item.currency === 'JPY' ? (item.amount * (appData.exchangeRate / 100)).toFixed(1) + ' HKD' : '';
+
+          div.innerHTML = `
+            <div class="expense-header">
+              <span class="expense-title">${item.title}</span>
+              <span class="expense-amount">${item.currency === 'JPY' ? '¥' : '$'}${item.amount}</span>
+            </div>
+            <div class="expense-meta">
+              <span>📅 ${item.date || '多天項目'}</span>
+              <span>💳 ${item.method}</span>
+              <span>👤 ${item.paidBy} 先付</span>
+              <span>⚖️ ${splitLabel} (${item.participants.join(', ')})</span>
+              ${convHKD ? `<span style="color:var(--primary-pink)">約 $${convHKD}</span>` : ''}
+            </div>
+            <div class="flex-gap" style="margin-top: 4px;">
+              <button class="btn btn-secondary" style="padding: 2px 8px; font-size: 0.7rem; width: auto;" onclick="toggleSettleExpense(${index})">
+                ${item.settled ? '取消結清' : '劃線結清'}
+              </button>
+              <button class="btn btn-danger" style="padding: 2px 8px; font-size: 0.7rem; width: auto;" onclick="deleteExpense(${index})">刪除</button>
+            </div>
+          `;
+          expList.appendChild(div);
+        });
+      }
+
+      // 3. 計算未結算總淨額 Matrix
+      calculateSettlements();
+      renderSettlementLogs();
+    }
+
+    function editParticipants() {
+      const names = prompt("請輸入參與人員名字 (以逗號分隔，最多 4 人):", appData.participants.join(","));
+      if (names) {
+        const arr = names.split(",").map(s => s.trim()).filter(s => s.length > 0).slice(0, 4);
+        if (arr.length > 0) {
+          appData.participants = arr;
+          saveData();
+          renderExpenseTab();
+        }
+      }
+    }
+
+    function openAddExpenseModal() {
+      document.getElementById("exp-title").value = "";
+      document.getElementById("exp-amount").value = "";
+      
+      // 填充付款人下拉選單
+      const paidBySelect = document.getElementById("exp-paid-by");
+      paidBySelect.innerHTML = appData.participants.map(p => `<option value="${p}">${p}</option>`).join("");
+
+      toggleSplitTypeUI();
+      document.getElementById("modal-expense").classList.add("active");
+    }
+
+    function toggleSplitTypeUI() {
+      const type = document.getElementById("exp-split-type").value;
+      const container = document.getElementById("split-participants-container");
+      container.innerHTML = "";
+
+      appData.participants.forEach(p => {
+        const row = document.createElement("div");
+        row.className = "split-person-row";
+        if (type === 'equal') {
+          row.innerHTML = `
+            <input type="checkbox" id="chk-p-${p}" value="${p}" checked>
+            <span>${p}</span>
+          `;
+        } else {
+          row.innerHTML = `
+            <input type="checkbox" id="chk-p-${p}" value="${p}" checked>
+            <span style="width:60px;">${p}</span>
+            <input type="number" class="form-control exp-custom-val" data-person="${p}" placeholder="應付金額" style="padding:4px 8px; font-size:0.8rem;">
+          `;
+        }
+        container.appendChild(row);
+      });
+    }
+
+    function saveExpenseItem() {
+      const title = document.getElementById("exp-title").value.trim();
+      const amount = parseFloat(document.getElementById("exp-amount").value);
+      const currency = document.getElementById("exp-currency").value;
+      const method = document.getElementById("exp-method").value;
+      const paidBy = document.getElementById("exp-paid-by").value;
+      const splitType = document.getElementById("exp-split-type").value;
+
+      if (!title || isNaN(amount) || amount <= 0) {
+        alert("請輸入正確的項目名稱與金額！");
+        return;
+      }
+
+      // 收集勾選成員
+      const selectedParticipants = [];
+      const customAmounts = {};
+
+      appData.participants.forEach(p => {
+        const chk = document.getElementById(`chk-p-${p}`);
+        if (chk && chk.checked) {
+          selectedParticipants.push(p);
+          if (splitType === 'custom') {
+            const valInput = document.querySelector(`.exp-custom-val[data-person="${p}"]`);
+            customAmounts[p] = parseFloat(valInput?.value || 0);
+          }
+        }
+      });
+
+      if (selectedParticipants.length === 0) {
+        alert("請至少選擇一位參與分帳的人員！");
+        return;
+      }
+
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const newExp = {
+        id: "exp_" + Date.now(),
+        title,
+        amount,
+        currency,
+        method,
+        paidBy,
+        splitType,
+        participants: selectedParticipants,
+        customAmounts,
+        settled: false,
+        date: todayStr
+      };
+
+      appData.expenses.push(newExp);
+      saveData();
+      closeModal("modal-expense");
+      renderExpenseTab();
+    }
+
+    function toggleSettleExpense(index) {
+      appData.expenses[index].settled = !appData.expenses[index].settled;
+      saveData();
+      renderExpenseTab();
+    }
+
+    function deleteExpense(index) {
+      if (confirm("確定要刪除這筆記帳嗎？")) {
+        appData.expenses.splice(index, 1);
+        saveData();
+        renderExpenseTab();
+      }
+    }
+
+    // 多天多項目淨額計算演算法 (互扣演算法)
+    function calculateSettlements() {
+      const container = document.getElementById("settlement-results-container");
+      container.innerHTML = "";
+
+      // 淨餘額 (單位統一轉換為 JPY 進行內部運算)
+      const balances = {};
+      appData.participants.forEach(p => balances[p] = 0);
+
+      // 過濾出「未結清」項目
+      const unsettled = appData.expenses.filter(e => !e.settled);
+
+      if (unsettled.length === 0) {
+        container.innerHTML = `<p style="font-size:0.85rem; color:var(--text-muted);">✨ 所有帳目皆已結清！</p>`;
+        return;
+      }
+
+      unsettled.forEach(item => {
+        // 轉為 JPY
+        const amountJPY = item.currency === 'HKD' ? item.amount / (appData.exchangeRate / 100) : item.amount;
+
+        // 付款人增加資產
+        if (balances[item.paidBy] !== undefined) {
+          balances[item.paidBy] += amountJPY;
+        }
+
+        // 扣除各參與者份額
+        if (item.splitType === 'equal') {
+          const share = amountJPY / item.participants.length;
+          item.participants.forEach(p => {
+            if (balances[p] !== undefined) balances[p] -= share;
+          });
+        } else {
+          // 自訂金額
+          item.participants.forEach(p => {
+            const pAmt = item.customAmounts[p] || 0;
+            const pAmtJPY = item.currency === 'HKD' ? pAmt / (appData.exchangeRate / 100) : pAmt;
+            if (balances[p] !== undefined) balances[p] -= pAmtJPY;
+          });
+        }
+      });
+
+      // 債務配對演算法 (Creditors vs Debtors)
+      let debtors = [];
+      let creditors = [];
+
+      for (let p in balances) {
+        if (balances[p] < -1) debtors.push({ name: p, amount: -balances[p] });
+        else if (balances[p] > 1) creditors.push({ name: p, amount: balances[p] });
+      }
+
+      let settlementLines = [];
+
+      let i = 0, j = 0;
+      while (i < debtors.length && j < creditors.length) {
+        let debt = debtors[i].amount;
+        let credit = creditors[j].amount;
+        let settledAmount = Math.min(debt, credit);
+
+        const amtJPY = Math.round(settledAmount);
+        const amtHKD = (amtJPY * (appData.exchangeRate / 100)).toFixed(1);
+
+        settlementLines.push({
+          from: debtors[i].name,
+          to: creditors[j].name,
+          jpy: amtJPY,
+          hkd: amtHKD
+        });
+
+        debtors[i].amount -= settledAmount;
+        creditors[j].amount -= settledAmount;
+
+        if (debtors[i].amount <= 1) i++;
+        if (creditors[j].amount <= 1) j++;
+      }
+
+      if (settlementLines.length === 0) {
+        container.innerHTML = `<p style="font-size:0.85rem; color:var(--text-muted);">互相抵消後無需付款！</p>`;
+      } else {
+        settlementLines.forEach(line => {
+          const div = document.createElement("div");
+          div.className = "settlement-line";
+          div.innerHTML = `🌸 <strong>${line.from}</strong> 應該付 <strong>${line.to}</strong>：<br>
+          <span style="color:var(--accent-pink); font-weight:800; font-size:0.95rem;">¥${line.jpy.toLocaleString()} 日圓</span> 
+          <span style="font-size:0.8rem; color:var(--text-muted);">(約 $${line.hkd} HKD)</span>`;
+          container.appendChild(div);
+        });
+      }
+    }
+
+    function settleAllUnsettled() {
+      if (confirm("確定要將所有未結清項目全部劃線標記為「已結清」嗎？")) {
+        const now = new Date();
+        const timeStr = `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+        
+        appData.expenses.forEach(e => e.settled = true);
+        appData.settlementLogs.push(`完成結清於：${timeStr}`);
+        
+        saveData();
+        renderExpenseTab();
+      }
+    }
+
+    function renderSettlementLogs() {
+      const container = document.getElementById("settlement-history-logs");
+      if (appData.settlementLogs.length === 0) {
+        container.innerText = "尚未有結算紀錄。";
+      } else {
+        container.innerHTML = appData.settlementLogs.map(log => `<div>🕒 ${log}</div>`).join("");
+      }
+    }
+
+    // 匯出文字帳單
+    function exportTextReport() {
+      let reportText = `🎀 日本旅行帳單明細對帳單 🎀\n日期: ${new Date().toLocaleDateString()}\n-------------------\n`;
+      const container = document.getElementById("settlement-results-container");
+      reportText += container.innerText + "\n-------------------\n紀錄於「日本旅行小助手 App」";
+
+      navigator.clipboard.writeText(reportText).then(() => {
+        alert("已成功將帳單複製至剪貼簿！");
+      }).catch(err => {
+        alert("複製失敗，請手動複製：" + reportText);
+      });
+    }
+
+    // 匯出圖片帳單 (html2canvas)
+    function exportImageReport() {
+      const target = document.getElementById("tab-expense");
+      html2canvas(target).then(canvas => {
+        const link = document.createElement("a");
+        link.download = `japan-trip-bill-${Date.now()}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      });
+    }
+
+    // ==========================================
+    // 5. 匯率計算器 (Tab 3)
+    // ==========================================
+    function updateExchangeRate(val) {
+      const num = parseFloat(val);
+      if (!isNaN(num) && num > 0) {
+        appData.exchangeRate = num;
+        saveData();
+      }
+    }
+
+    function convertCurrency(from) {
+      const rate = appData.exchangeRate; // 100 JPY = rate HKD
+      if (from === 'JPY') {
+        const jpy = parseFloat(document.getElementById("calc-jpy").value) || 0;
+        document.getElementById("calc-hkd").value = (jpy * (rate / 100)).toFixed(2);
+      } else {
+        const hkd = parseFloat(document.getElementById("calc-hkd").value) || 0;
+        document.getElementById("calc-jpy").value = Math.round(hkd / (rate / 100));
+      }
+    }
+
+    function quickConvertJPY(amount) {
+      document.getElementById("calc-jpy").value = amount;
+      convertCurrency('JPY');
+    }
+
+    // ==========================================
+    // 6. 設定與工具
+    // ==========================================
+    function addNewDay() {
+      const dayNum = appData.days.length + 1;
+      appData.days.push({
+        date: `2026-08-${10 + dayNum - 1}`,
+        weather: "☀️ 25°C 晴朗",
+        items: []
+      });
+      saveData();
+      renderScheduleTab();
+      alert(`已新增 Day ${dayNum}！`);
+    }
+
+    function clearAllData() {
+      if (confirm("⚠️ 確定要重置所有行程與記帳資料嗎？此操作無法撤銷！")) {
+        localStorage.removeItem(STORAGE_KEY);
+        location.reload();
+      }
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove("active");
+    }
+
+    // 初始化 App
+    window.onload = function() {
+      loadData();
+      document.getElementById("exchange-rate-input").value = appData.exchangeRate;
+      document.getElementById("app-version-display").innerText = CURRENT_VERSION;
+      renderScheduleTab();
+    };
+  </script>
+</body>
+</html>
