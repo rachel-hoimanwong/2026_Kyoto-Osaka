@@ -575,7 +575,7 @@
         const editPanel = document.createElement('div');
         editPanel.className = 'edit-panel';
         editPanel.innerHTML = `
-          <label>📝 簡潔標題</label>
+          <label>📝 重點行程</label>
           <input type="text" id="editTitle_${dayIndex}" value="${day.title.replace(/"/g, '&quot;')}" placeholder="例：關西機場→宇治→河原町">
           
           <label style="margin-top:10px;">📋 詳細行程項目</label>
@@ -675,7 +675,7 @@
                   }
                   return `<div style="margin:6px 0;">${d} ${mapLink}</div>`;
                 }).join('')}
-                <div style="margin-top:6px; font-style:italic; color:#c94b6c;">🚶‍♀️ 交通：請依出口指標移動</div>
+                <div style="margin-top:6px; font-style:italic; color:#c94b6c;">🚶‍♀️ 交通：請依Google/出口指標移動</div>
                 <button class="edit-btn" onclick="window.triggerEdit(${idx})">✏️ 修改行程</button>
               </div>
             </div>
