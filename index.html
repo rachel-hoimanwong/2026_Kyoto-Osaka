@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, shrink-to-fit=yes">
+  <title>🌸 京都大阪 · 粉色足跡 | 行程記帳小管家</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #ffeef8;
+      font-family: 'Quicksand', 'Zen Kaku Gothic New', 'Noto Sans HK', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 16px;
+      margin: 0;
+    }
+
+    .phone-frame {
+      max-width: 420px;
+      width: 100%;
+      background: #fff0f5;
+      border-radius: 48px 48px 32px 32px;
+      box-shadow: 0 20px 35px rgba(255, 150, 180, 0.25);
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+      border: 2px solid #ffc0cb;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      background: linear-gradient(145deg, #fff5fb 0%, #ffe4ed 100%);
+    }
+
+    .status-bar {
+      padding: 12px 20px 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: #d46a7a;
+      background: #ffeaf2;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .save-indicator {
+      background: #ffd9e5;
+      padding: 4px 12px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .app-header {
+      padding: 10px 20px 5px;
+      text-align: left;
+    }
+
+    .app-header h1 {
+      font-size: 26px;
+      font-weight: 700;
+      color: #c94b6c;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .main-nav {
+      display: flex;
+      justify-content: space-around;
+      background: #ffe4ed;
+      padding: 10px 12px;
+      margin: 8px 16px;
+      border-radius: 40px;
+      box-shadow: 0 4px 8px rgba(255, 140, 160, 0.2);
+    }
+
+    .nav-btn {
+      background: transparent;
+      border: none;
+      font-weight: 600;
+      color: #b3546b;
+      padding: 10px 14px;
+      border-radius: 30px;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: #fff0f3;
+    }
+
+    .nav-btn.active {
+      background: #ffb6c1;
+      color: white;
+      box-shadow: 0 6px 12px #ff99aa;
+      font-weight: 700;
+    }
+
+    .section {
+      display: none;
+      padding: 0 18px 20px;
+      flex: 1;
+      overflow-y: auto;
+      max-height: 600px;
+    }
+
+    .section.active {
+      display: block;
+    }
+
+    .day-card {
+      background: #ffffffdd;
+      backdrop-filter: blur(12px);
+      border-radius: 28px;
+      padding: 12px 16px;
+      margin-bottom: 14px;
+      box-shadow: 0 8px 18px rgba(255, 140, 160, 0.15);
+      border: 1px solid #ffb6c1;
+    }
+
+    .day-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .day-title {
+      font-weight: 700;
+      color: #b34465;
+    }
+
+    .weather-tag {
+      background: #ffd9e5;
+      border-radius: 30px;
+      padding: 2px 12px;
+      font-size: 12px;
+      color: #b34465;
+      white-space: nowrap;
+    }
+
+    .weather-tag.loading {
+      opacity: 0.6;
+      font-style: italic;
+    }
+
+    .trip-details {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #4a2c38;
+      border-top: 1px dashed #ffb6c1;
+      padding-top: 8px;
+    }
+
+    .map-link {
+      background: #ffc0cb;
+      border: none;
+      padding: 4px 10px;
+      border-radius: 16px;
+      font-size: 12px;
+      margin-left: 6px;
+      color: white;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .edit-btn {
+      background: #ffb6c1;
+      color: white;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: 0.2s;
+    }
+
+    .edit-btn:hover {
+      background: #ff99aa;
+    }
+
+    .edit-panel {
+      background: #fff5fb;
+      border-radius: 20px;
+      padding: 12px;
+      margin-top: 10px;
+      border: 1px dashed #ffb6c1;
+    }
+
+    .edit-panel label {
+      font-size: 12px;
+      color: #b3546b;
+      font-weight: 600;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .edit-panel input[type="text"] {
+      width: 100%;
+      margin-bottom: 10px;
+    }
+
+    .edit-item {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+
+    .edit-item input {
+      flex: 2;
+      min-width: 120px;
+    }
+
+    .edit-item input.map-input {
+      flex: 1.5;
+    }
+
+    .remove-item-btn {
+      background: #e0b0b0;
+      border: none;
+      color: white;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .add-item-btn {
+      background: #ffc0cb;
+      border: none;
+      color: white;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      margin-top: 6px;
+      cursor: pointer;
+    }
+
+    .save-edit-btn {
+      background: #d46a7a;
+      color: white;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 20px;
+      font-weight: 600;
+      margin-top: 8px;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    .expense-card {
+      background: #ffffffec;
+      border-radius: 20px;
+      padding: 14px;
+      margin: 10px 0;
+      border: 1px solid #ffb7c3;
+    }
+
+    .flex-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    input,
+    select,
+    button {
+      font-family: inherit;
+      border-radius: 20px;
+      border: 1px solid #ffb6c1;
+      padding: 8px 12px;
+      background: white;
+      font-size: 13px;
+      outline: none;
+    }
+
+    button {
+      background: #ffb6c1;
+      color: white;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      background: #ff99aa;
+    }
+
+    .settled-line {
+      text-decoration: line-through;
+      opacity: 0.7;
+    }
+
+    .currency-block {
+      background: #ffeaf2;
+      padding: 8px;
+      border-radius: 16px;
+      margin: 8px 0;
+    }
+
+    hr {
+      border: 0.5px solid #ffc0cb;
+      margin: 12px 0;
+    }
+
+    .small-text {
+      font-size: 11px;
+      color: #b3546b;
+    }
+
+    footer {
+      text-align: center;
+      padding: 10px 18px;
+      color: #b3546b;
+      font-size: 11px;
+      background: #ffeaf2;
+      border-top: 1px solid #ffb6c1;
+      margin-top: 8px;
+    }
+
+    @media (max-width: 400px) {
+      .flex-row {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="phone-frame">
+    <div class="status-bar">
+      <span>🌸 京都・大阪</span>
+      <span class="save-indicator" id="saveStatus">💾 已儲存</span>
+    </div>
+    <div class="app-header">
+      <h1>🍡 粉色足跡 <span style="font-size:16px;">by 小櫻</span></h1>
+    </div>
+
+    <div class="main-nav">
+      <button class="nav-btn active" data-section="itinerary">📅 行程</button>
+      <button class="nav-btn" data-section="expenses">💰 記帳</button>
+      <button class="nav-btn" data-section="calculator">🧮 匯率</button>
+    </div>
+
+    <!-- 行程區 -->
+    <div id="itinerary" class="section active">
+      <div id="daysContainer"></div>
+    </div>
+
+    <!-- 記帳區 -->
+    <div id="expenses" class="section">
+      <div style="margin-bottom:16px; display:flex; gap:8px;">
+        <input type="text" id="expenseName" placeholder="項目名稱 (例: 午餐)" style="flex:2;">
+        <input type="number" id="totalAmount" placeholder="總額" step="1" style="flex:1;">
+      </div>
+      <div class="flex-row">
+        <select id="currencySelect"><option value="JPY">日圓 ¥</option><option value="HKD">港幣 HK$</option></select>
+        <input type="number" id="peopleCount" placeholder="人數" value="2" min="2" max="4" style="width:70px;">
+        <select id="splitMode"><option value="equal">人均</option><option value="custom">分開付</option></select>
+        <select id="payerSelect"><option>付款人</option></select>
+      </div>
+      <div id="customAmounts" style="display:none; margin-top:8px;"></div>
+      <button id="addExpenseBtn" style="margin-top:10px; width:100%;">➕ 新增帳目</button>
+      <div id="expenseList" style="margin-top:14px;"></div>
+      <button id="settleAllBtn" style="background:#d46a7a; margin-top:12px; width:100%;">📋 最終結算明細</button>
+      <div id="finalSummary" style="margin-top:10px; background:#fff0f3; border-radius:20px; padding:12px;"></div>
+    </div>
+
+    <!-- 匯率計算器 -->
+    <div id="calculator" class="section">
+      <div style="background: #fff0f5; border-radius: 24px; padding: 18px;">
+        <label>🌸 匯率設定 (每1日圓兌港幣)</label>
+        <input type="number" id="rateInput" step="0.0001" value="0.052" style="width:100%; margin:6px 0;">
+        <div class="flex-row">
+          <input type="number" id="jpyInput" placeholder="日圓" style="flex:1;">
+          <span>⇄</span>
+          <input type="number" id="hkdInput" placeholder="港幣" style="flex:1;">
+        </div>
+        <button id="convertBtn" style="margin-top:8px; width:100%;">🔄 換算</button>
+      </div>
+    </div>
+
+    <footer>
+      🌸 天氣資料來源：Open-Meteo (基於多國氣象模型) | Japan Travel Itinerary © 2026
+    </footer>
+  </div>
+
+  <script>
+    (function () {
+      // ---------- 儲存系統 ----------
+      const STORAGE_KEY = 'pinkTripKyotoOsaka_v3';
+      let appData = {
+        itineraryOpen: {},
+        expenses: [],
+        people: ['A', 'B', 'C', 'D'],
+        rate: 0.052,
+        settledItems: {},
+        tripDays: [
+          { date: "8/5 (三)", title: "關西機場→宇治→河原町→東山", details: [
+            "🚆 搭JR Haruka至京都站，轉阪急至河原町站(2號出口)", "🍵 伊藤久右衛門 宇治本店", "⛩️ 宇治上神社・平等院", "🌙 祇園白川・八坂神社"
+          ], maps: ["京都河原町駅","伊藤久右衛門+宇治本店","宇治上神社","八坂神社"] },
+          { date: "8/6 (四)", title: "伏見稻荷→兩足院→下鴨神社夏越神事", details: [
+            "🚃 河原町→伏見稻荷(京阪電車)", "🐟 鰻魚飯午餐", "🌿 兩足院・安井金比羅宮", "⛩️ 下鴨神社(蕾絲御守/夏越神事)"
+          ], maps: ["伏見稻荷大社","兩足院","下鴨神社"] },
+          { date: "8/7 (五)", title: "貴船神社・川床→北野天滿宮祭", details: [
+            "🚋 出町柳→貴船口", "💧 貴船水占卜・川床午餐", "🏮 北野天滿宮御手洗祭"
+          ], maps: ["貴船神社","北野天滿宮"] },
+          { date: "8/8 (六)", title: "京都→大阪・teamLab", details: [
+            "🚆 阪急梅田→難波", "🌆 梅田茶屋町・OSA COFFEE", "✨ teamLab長居植物園"
+          ], maps: ["難波駅","OSA+COFFEE","teamLab+Botanical+Garden+Osaka"] },
+          { date: "8/9 (日)", title: "住吉大社→心齋橋Sanrio", details: [
+            "⛩️ 住吉大社・大鳥大社", "🦁 難波八坂神社", "🎀 Sanrio Gallery心齋橋"
+          ], maps: ["住吉大社","難波八坂神社","Sanrio+Gallery+心齋橋店"] },
+          { date: "8/10 (一)", title: "木津市場→海遊館→万博夏祭", details: [
+            "🐟 木津卸売市場", "🐋 海遊館", "🎆 万博記念公園夏祭"
+          ], maps: ["木津卸売市場","大阪海遊館","万博記念公園"] },
+          { date: "8/11 (二)", title: "黑門市場→難波採買→關西機場", details: [
+            "🛍️ 黑門市場・Namba Parks", "🚃 南海Rapi:t至關西機場T2"
+          ], maps: ["黑門市場","關西國際機場"] }
+        ]
+      };
+
+      function saveToStorage() {
+        try {
+          const payload = { ...appData, version: 3 };
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+          document.getElementById('saveStatus').innerHTML = '💾 已儲存';
+        } catch (e) {
+          document.getElementById('saveStatus').innerHTML = '⚠️ 儲存失敗';
+        }
+      }
+
+      function loadFromStorage() {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          try {
+            const parsed = JSON.parse(raw);
+            appData = { ...appData, ...parsed };
+          } catch (e) { }
+        }
+      }
+
+      function autoSave() { saveToStorage(); }
+
+      // ---------- 天氣功能 (Open-Meteo) ----------
+      const weatherCache = {
+        data: null,
+        timestamp: null,
+        ttl: 30 * 60 * 1000
+      };
+
+      async function fetchWeatherForDays() {
+        if (weatherCache.data && weatherCache.timestamp && (Date.now() - weatherCache.timestamp) < weatherCache.ttl) {
+          return weatherCache.data;
+        }
+
+        try {
+          const [kyotoRes, osakaRes] = await Promise.all([
+            fetch('https://api.open-meteo.com/v1/forecast?latitude=35.0116&longitude=135.7681&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia/Tokyo&forecast_days=7'),
+            fetch('https://api.open-meteo.com/v1/forecast?latitude=34.6937&longitude=135.5022&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia/Tokyo&forecast_days=7')
+          ]);
+
+          const [kyotoData, osakaData] = await Promise.all([kyotoRes.json(), osakaRes.json()]);
+
+          const weatherIcons = {
+            0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️',
+            45: '🌫️', 48: '🌫️', 51: '🌧️', 53: '🌧️', 55: '🌧️',
+            61: '🌧️', 63: '🌧️', 65: '🌧️', 71: '🌨️', 73: '🌨️',
+            75: '🌨️', 80: '🌧️', 81: '🌧️', 82: '🌧️', 95: '⛈️'
+          };
+
+          const weatherMap = {};
+          kyotoData.daily.time.forEach((date, i) => {
+            weatherMap[date] = {
+              kyoto: {
+                icon: weatherIcons[kyotoData.daily.weather_code[i]] || '🌡️',
+                max: Math.round(kyotoData.daily.temperature_2m_max[i]),
+                min: Math.round(kyotoData.daily.temperature_2m_min[i])
+              }
+            };
+          });
+
+          osakaData.daily.time.forEach((date, i) => {
+            if (weatherMap[date]) {
+              weatherMap[date].osaka = {
+                icon: weatherIcons[osakaData.daily.weather_code[i]] || '🌡️',
+                max: Math.round(osakaData.daily.temperature_2m_max[i]),
+                min: Math.round(osakaData.daily.temperature_2m_min[i])
+              };
+            }
+          });
+
+          weatherCache.data = weatherMap;
+          weatherCache.timestamp = Date.now();
+          return weatherMap;
+        } catch (error) {
+          console.error('天氣獲取失敗:', error);
+          return null;
+        }
+      }
+
+      async function updateItineraryWeather() {
+        const weatherTags = document.querySelectorAll('.weather-tag');
+        weatherTags.forEach(tag => tag.classList.add('loading'));
+
+        const weatherData = await fetchWeatherForDays();
+        if (!weatherData) {
+          weatherTags.forEach(tag => {
+            tag.classList.remove('loading');
+            tag.textContent = '🌡️ 天氣暫無法載入';
+          });
+          return;
+        }
+
+        const dateMapping = {
+          '2026-08-05': '8/5 (三)', '2026-08-06': '8/6 (四)',
+          '2026-08-07': '8/7 (五)', '2026-08-08': '8/8 (六)',
+          '2026-08-09': '8/9 (日)', '2026-08-10': '8/10 (一)',
+          '2026-08-11': '8/11 (二)'
+        };
+
+        weatherTags.forEach(tag => {
+          tag.classList.remove('loading');
+          const parentCard = tag.closest('.day-card');
+          if (!parentCard) return;
+          const headerText = parentCard.querySelector('.day-title')?.textContent || '';
+          let matchedDate = null;
+          for (const [apiDate, displayDate] of Object.entries(dateMapping)) {
+            if (headerText.includes(displayDate)) {
+              matchedDate = apiDate;
+              break;
+            }
+          }
+          if (matchedDate && weatherData[matchedDate]) {
+            const weather = weatherData[matchedDate];
+            const locationWeather = matchedDate <= '2026-08-07' ? weather.kyoto : weather.osaka;
+            if (locationWeather) {
+              tag.textContent = `${locationWeather.icon} ${locationWeather.min}°-${locationWeather.max}°C`;
+            } else {
+              tag.textContent = '🌡️ 資料缺失';
+            }
+          }
+        });
+      }
+
+      // ---------- 行程修改功能 (包含標題) ----------
+      function enableEditMode(dayIndex) {
+        const day = appData.tripDays[dayIndex];
+        const card = document.querySelectorAll('.day-card')[dayIndex];
+        const detailsDiv = card.querySelector('.trip-details');
+        
+        // 移除舊的編輯面板
+        const oldPanel = detailsDiv.querySelector('.edit-panel');
+        if (oldPanel) oldPanel.remove();
+
+        const editPanel = document.createElement('div');
+        editPanel.className = 'edit-panel';
+        editPanel.innerHTML = `
+          <label>📝 簡潔標題</label>
+          <input type="text" id="editTitle_${dayIndex}" value="${day.title.replace(/"/g, '&quot;')}" placeholder="例：關西機場→宇治→河原町">
+          
+          <label style="margin-top:10px;">📋 詳細行程項目</label>
+          <div id="editItems_${dayIndex}">
+            ${day.details.map((detail, i) => `
+              <div class="edit-item" data-index="${i}">
+                <input type="text" class="detail-input" value="${detail.replace(/"/g, '&quot;')}" placeholder="行程描述">
+                <input type="text" class="map-input" value="${(day.maps && day.maps[i]) ? day.maps[i] : ''}" placeholder="Google Maps 關鍵字">
+                <button class="remove-item-btn" onclick="window.removeEditItem(${dayIndex}, ${i})">✕</button>
+              </div>
+            `).join('')}
+          </div>
+          <button class="add-item-btn" onclick="window.addEditItem(${dayIndex})">➕ 增加行程</button>
+          <button class="save-edit-btn" onclick="window.saveEdit(${dayIndex})">💾 儲存修改</button>
+        `;
+
+        detailsDiv.appendChild(editPanel);
+      }
+
+      window.removeEditItem = function(dayIndex, itemIndex) {
+        const container = document.getElementById(`editItems_${dayIndex}`);
+        const items = container.querySelectorAll('.edit-item');
+        if (items.length <= 1) {
+          alert('至少需要保留一個行程項目');
+          return;
+        }
+        items[itemIndex].remove();
+        // 重新索引
+        const remaining = container.querySelectorAll('.edit-item');
+        remaining.forEach((item, i) => item.dataset.index = i);
+      };
+
+      window.addEditItem = function(dayIndex) {
+        const container = document.getElementById(`editItems_${dayIndex}`);
+        const newIndex = container.querySelectorAll('.edit-item').length;
+        const newItem = document.createElement('div');
+        newItem.className = 'edit-item';
+        newItem.dataset.index = newIndex;
+        newItem.innerHTML = `
+          <input type="text" class="detail-input" placeholder="新行程描述">
+          <input type="text" class="map-input" placeholder="Google Maps 關鍵字">
+          <button class="remove-item-btn" onclick="window.removeEditItem(${dayIndex}, ${newIndex})">✕</button>
+        `;
+        container.appendChild(newItem);
+      };
+
+      window.saveEdit = function(dayIndex) {
+        // 儲存標題
+        const titleInput = document.getElementById(`editTitle_${dayIndex}`);
+        if (titleInput && titleInput.value.trim()) {
+          appData.tripDays[dayIndex].title = titleInput.value.trim();
+        }
+
+        // 儲存詳細項目
+        const container = document.getElementById(`editItems_${dayIndex}`);
+        const items = container.querySelectorAll('.edit-item');
+        const newDetails = [];
+        const newMaps = [];
+        
+        items.forEach(item => {
+          const detailInput = item.querySelector('.detail-input');
+          const mapInput = item.querySelector('.map-input');
+          if (detailInput.value.trim()) {
+            newDetails.push(detailInput.value.trim());
+            newMaps.push(mapInput.value.trim() || '');
+          }
+        });
+
+        if (newDetails.length === 0) {
+          alert('請至少保留一個行程項目');
+          return;
+        }
+
+        appData.tripDays[dayIndex].details = newDetails;
+        appData.tripDays[dayIndex].maps = newMaps;
+        
+        renderItinerary();
+        autoSave();
+      };
+
+      // ---------- 行程渲染 ----------
+      function renderItinerary() {
+        const container = document.getElementById('daysContainer');
+        container.innerHTML = appData.tripDays.map((day, idx) => {
+          const isOpen = appData.itineraryOpen[idx] || false;
+          return `
+            <div class="day-card">
+              <div class="day-header" data-dayidx="${idx}">
+                <span class="day-title">📌 ${day.date} ${day.title}</span>
+                <span class="weather-tag loading">🌡️ 載入中...</span>
+              </div>
+              <div class="trip-details" style="display:${isOpen ? 'block' : 'none'};">
+                ${day.details.map((d, i) => {
+                  let mapLink = '';
+                  if (day.maps && day.maps[i]) {
+                    mapLink = `<a class="map-link" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(day.maps[i])}" target="_blank">🗺️</a>`;
+                  }
+                  return `<div style="margin:6px 0;">${d} ${mapLink}</div>`;
+                }).join('')}
+                <div style="margin-top:6px; font-style:italic; color:#c94b6c;">🚶‍♀️ 交通：請依出口指標移動</div>
+                <button class="edit-btn" onclick="window.triggerEdit(${idx})">✏️ 修改行程</button>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        document.querySelectorAll('.day-header').forEach(header => {
+          header.addEventListener('click', (e) => {
+            const idx = header.dataset.dayidx;
+            appData.itineraryOpen[idx] = !appData.itineraryOpen[idx];
+            renderItinerary();
+            updateItineraryWeather();
+            autoSave();
+          });
+        });
+
+        updateItineraryWeather();
+      }
+
+      window.triggerEdit = function(dayIndex) {
+        enableEditMode(dayIndex);
+      };
+
+      // ---------- 記帳邏輯 ----------
+      function updatePayerOptions() {
+        const count = parseInt(document.getElementById('peopleCount').value) || 2;
+        const payerSelect = document.getElementById('payerSelect');
+        const people = appData.people.slice(0, count);
+        payerSelect.innerHTML = people.map(p => `<option value="${p}">${p}</option>`).join('');
+        renderCustomInputs();
+      }
+
+      function renderCustomInputs() {
+        const mode = document.getElementById('splitMode').value;
+        const count = parseInt(document.getElementById('peopleCount').value) || 2;
+        const container = document.getElementById('customAmounts');
+        if (mode === 'custom') {
+          const people = appData.people.slice(0, count);
+          container.style.display = 'block';
+          container.innerHTML = people.map(p => `
+            <div class="flex-row" style="margin-bottom:4px;">
+              <span style="width:30px;">${p}</span>
+              <input type="number" class="custom-amount" data-person="${p}" placeholder="金額" step="1" style="flex:1;">
+            </div>
+          `).join('');
+        } else {
+          container.style.display = 'none';
+        }
+      }
+
+      function addExpense() {
+        const name = document.getElementById('expenseName').value.trim();
+        const total = parseFloat(document.getElementById('totalAmount').value);
+        const currency = document.getElementById('currencySelect').value;
+        const peopleCount = parseInt(document.getElementById('peopleCount').value);
+        const payer = document.getElementById('payerSelect').value;
+        const mode = document.getElementById('splitMode').value;
+        if (!name || isNaN(total) || total <= 0) return alert('請填寫名稱與金額');
+
+        let splits = {};
+        const peopleList = appData.people.slice(0, peopleCount);
+        if (mode === 'equal') {
+          const perPerson = Math.floor(total / peopleCount);
+          peopleList.forEach(p => splits[p] = perPerson);
+        } else {
+          const inputs = document.querySelectorAll('.custom-amount');
+          inputs.forEach(inp => {
+            const person = inp.dataset.person;
+            const val = parseFloat(inp.value) || 0;
+            splits[person] = val;
+          });
+        }
+
+        const expense = {
+          id: Date.now(),
+          name, total, currency, payer, mode, splits, peopleCount, timestamp: new Date().toISOString()
+        };
+        appData.expenses.push(expense);
+        renderExpenses();
+        autoSave();
+        clearExpenseForm();
+      }
+
+      function clearExpenseForm() {
+        document.getElementById('expenseName').value = '';
+        document.getElementById('totalAmount').value = '';
+      }
+
+      function toggleSettle(id) {
+        appData.settledItems[id] = !appData.settledItems[id];
+        renderExpenses();
+        autoSave();
+      }
+
+      function deleteExpense(id) {
+        appData.expenses = appData.expenses.filter(e => e.id !== id);
+        delete appData.settledItems[id];
+        renderExpenses();
+        autoSave();
+      }
+
+      function renderExpenses() {
+        const list = document.getElementById('expenseList');
+        list.innerHTML = appData.expenses.map(exp => {
+          const settled = appData.settledItems[exp.id];
+          return `
+            <div class="expense-card ${settled ? 'settled-line' : ''}">
+              <div><strong>${exp.name}</strong> (${exp.currency}) 總額: ${exp.total}</div>
+              <div>👤 付款: ${exp.payer} | ${exp.mode === 'equal' ? '人均' : '分開付'}</div>
+              <div class="flex-row" style="justify-content:space-between;">
+                <button onclick="window.toggleSettle(${exp.id})">${settled ? '✅已結清' : '⬜ 未結'}</button>
+                <button onclick="window.deleteExpense(${exp.id})" style="background:#e0b0b0;">🗑️</button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      function calculateFinal() {
+        const rate = appData.rate;
+        let balance = {};
+        appData.people.forEach(p => balance[p] = 0);
+
+        appData.expenses.forEach(exp => {
+          if (appData.settledItems[exp.id]) return;
+          const payer = exp.payer;
+          balance[payer] = (balance[payer] || 0) + exp.total;
+          Object.entries(exp.splits).forEach(([person, amount]) => {
+            balance[person] = (balance[person] || 0) - amount;
+          });
+        });
+
+        return balance;
+      }
+
+      function showFinalSummary() {
+        const balance = calculateFinal();
+        const rate = appData.rate;
+        const summaryDiv = document.getElementById('finalSummary');
+        let html = '<div><strong>🧾 最終結算 (未結清項目)</strong></div>';
+        const entries = Object.entries(balance);
+        if (entries.length === 0) { html += '<div>無待結算項目</div>'; }
+        entries.forEach(([person, amount]) => {
+          const jpy = Math.round(amount);
+          const hkd = (amount * rate).toFixed(2);
+          html += `<div>${person}: ${amount >= 0 ? '收' : '付'} ${Math.abs(jpy)}日圓 (約HK$${Math.abs(hkd)})</div>`;
+        });
+
+        html += '<hr><div>💞 付款建議：</div>';
+        const people = appData.people;
+        for (let i = 0; i < people.length; i++) {
+          for (let j = i + 1; j < people.length; j++) {
+            const a = people[i], b = people[j];
+            const diff = (balance[a] || 0) - (balance[b] || 0);
+            if (Math.abs(diff) > 0.5) {
+              const payerPerson = diff > 0 ? b : a;
+              const receiver = diff > 0 ? a : b;
+              const amount = Math.abs(diff);
+              html += `<div>💖 ${payerPerson} 應付 ${receiver} ${Math.round(amount)}日圓 (HK$${(amount * rate).toFixed(2)})</div>`;
+            }
+          }
+        }
+        summaryDiv.innerHTML = html;
+      }
+
+      function convertCurrency() {
+        const rate = parseFloat(document.getElementById('rateInput').value) || 0.052;
+        appData.rate = rate;
+        const jpy = parseFloat(document.getElementById('jpyInput').value);
+        const hkd = parseFloat(document.getElementById('hkdInput').value);
+        if (!isNaN(jpy)) document.getElementById('hkdInput').value = (jpy * rate).toFixed(2);
+        else if (!isNaN(hkd)) document.getElementById('jpyInput').value = (hkd / rate).toFixed(0);
+        autoSave();
+      }
+
+      // ---------- 初始化 ----------
+      window.onload = function () {
+        loadFromStorage();
+        renderItinerary();
+        updatePayerOptions();
+        renderExpenses();
+        document.getElementById('rateInput').value = appData.rate;
+
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(btn.dataset.section).classList.add('active');
+          });
+        });
+
+        document.getElementById('peopleCount').addEventListener('change', updatePayerOptions);
+        document.getElementById('splitMode').addEventListener('change', renderCustomInputs);
+        document.getElementById('addExpenseBtn').addEventListener('click', addExpense);
+        document.getElementById('settleAllBtn').addEventListener('click', showFinalSummary);
+        document.getElementById('convertBtn').addEventListener('click', convertCurrency);
+        document.getElementById('rateInput').addEventListener('change', (e) => { appData.rate = parseFloat(e.target.value); autoSave(); });
+
+        window.toggleSettle = toggleSettle;
+        window.deleteExpense = deleteExpense;
+
+        document.querySelectorAll('input, select').forEach(el => el.addEventListener('change', autoSave));
+      };
+    })();
+  </script>
+</body>
+</html>
