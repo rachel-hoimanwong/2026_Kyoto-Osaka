@@ -346,6 +346,25 @@
       opacity: 0.7;
     }
 
+    .sync-controls {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      padding: 6px 18px;
+      background: #ffeaf2;
+      font-size: 11px;
+    }
+
+    .sync-btn {
+      background: #ffc0cb;
+      color: white;
+      border: none;
+      padding: 4px 12px;
+      border-radius: 14px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+
     hr {
       border: 0.5px solid #ffc0cb;
       margin: 12px 0;
@@ -384,13 +403,19 @@
       <span class="save-indicator" id="saveStatus">💾 已儲存</span>
     </div>
     <div class="app-header">
-     <h1>🍡 京阪食同玩 <span style="font-size:14px;">唔洗瞓🫨🫨</span></h1>
+      <h1>🍡 京阪食同玩 <span style="font-size:14px;">唔洗瞓🫨🫨</span></h1>
     </div>
 
     <div class="main-nav">
       <button class="nav-btn active" data-section="itinerary">📅 行程</button>
       <button class="nav-btn" data-section="expenses">💰 記帳</button>
       <button class="nav-btn" data-section="calculator">🧮 匯率</button>
+    </div>
+
+    <!-- 同步控制按鈕 -->
+    <div class="sync-controls">
+      <button class="sync-btn" id="manualSyncBtn">🔄 手動同步</button>
+      <span style="color:#b3546b;" id="syncStatus">⏱️ 每5秒自動同步</span>
     </div>
 
     <!-- 行程區 -->
@@ -432,14 +457,22 @@
     </div>
 
     <footer>
-      🌸 天氣資料來源：Open-Meteo (基於多國氣象模型) | Japan Travel Itinerary © 2026
+      🌸 天氣資料來源：Open-Meteo | 雲端同步：Google Sheets | Japan Travel © 2026
     </footer>
   </div>
 
   <script>
     (function () {
+      // ---------- 🔴 呢度要改！貼上你嘅 Google Apps Script URL ----------
+      const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwDr4_lFr3tht9Za1gxqkeBkZipvlULcDxLbFjzwAc4mGMuzOLX9HeD_3DKWQhJKuc/exec';
+      // ----------------------------------------------------------------
+      
+      const SYNC_INTERVAL = 5000; // 每5秒自動同步一次
+      let isUploading = false;
+      let lastCloudUpdate = null;
+
       // ---------- 儲存系統 ----------
-      const STORAGE_KEY = 'pinkTripKyotoOsaka_v4';
+      const STORAGE_KEY = 'pinkTripKyotoOsaka_v5';
       let appData = {
         itineraryOpen: {},
         expenses: [],
@@ -529,13 +562,90 @@
         ]
       };
 
+      // ---------- 雲端同步功能 ----------
+      async function uploadToCloud() {
+        if (isUploading) return;
+        isUploading = true;
+        try {
+          const formData = new URLSearchParams();
+          formData.append('action', 'save');
+          formData.append('data', JSON.stringify(appData));
+          
+          const response = await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            body: formData
+          });
+          
+          if (response.ok) {
+            lastCloudUpdate = Date.now();
+            document.getElementById('saveStatus').innerHTML = '☁️ 已同步';
+            document.getElementById('syncStatus').textContent = '✅ 剛剛同步完成';
+            setTimeout(() => {
+              document.getElementById('saveStatus').innerHTML = '💾 已儲存';
+            }, 2000);
+          }
+        } catch (e) {
+          console.log('☁️ 上載失敗:', e);
+          document.getElementById('syncStatus').textContent = '⚠️ 同步失敗，將重試';
+        }
+        isUploading = false;
+      }
+
+      async function downloadFromCloud(showAlert = false) {
+        try {
+          const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=load&t=${Date.now()}`);
+          const data = await response.json();
+          
+          if (data && Object.keys(data).length > 0 && data.tripDays) {
+            // 檢查雲端資料是否比本地新
+            const merged = { 
+              ...appData, 
+              ...data, 
+              settledItems: { ...appData.settledItems, ...(data.settledItems || {}) },
+              itineraryOpen: { ...appData.itineraryOpen, ...(data.itineraryOpen || {}) }
+            };
+            
+            const oldDataStr = JSON.stringify(appData);
+            const newDataStr = JSON.stringify(merged);
+            
+            if (oldDataStr !== newDataStr) {
+              appData = merged;
+              saveToStorage();
+              renderItinerary();
+              renderExpenses();
+              updateItineraryWeather();
+              document.getElementById('rateInput').value = appData.rate;
+              document.getElementById('saveStatus').innerHTML = '☁️ 已更新';
+              document.getElementById('syncStatus').textContent = '📥 已從雲端接收更新';
+              setTimeout(() => {
+                document.getElementById('saveStatus').innerHTML = '💾 已儲存';
+              }, 2000);
+              if (showAlert) alert('✅ 已從雲端同步最新資料！');
+            } else {
+              document.getElementById('syncStatus').textContent = '⏱️ 資料已是最新';
+            }
+          }
+        } catch (e) {
+          console.log('☁️ 下載失敗:', e);
+          document.getElementById('syncStatus').textContent = '⚠️ 無法連接雲端';
+        }
+      }
+
+      // 手動同步按鈕
+      function manualSync() {
+        document.getElementById('syncStatus').textContent = '🔄 同步中...';
+        Promise.all([uploadToCloud(), downloadFromCloud(true)]).then(() => {
+          document.getElementById('syncStatus').textContent = '✅ 同步完成';
+        });
+      }
+
+      // ---------- 儲存系統 ----------
       function saveToStorage() {
         try {
-          const payload = { ...appData, version: 4 };
+          const payload = { ...appData, version: 5 };
           localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-          document.getElementById('saveStatus').innerHTML = '💾 已儲存';
         } catch (e) {
-          document.getElementById('saveStatus').innerHTML = '⚠️ 儲存失敗';
+          console.log('本地儲存失敗');
         }
       }
 
@@ -549,7 +659,10 @@
         }
       }
 
-      function autoSave() { saveToStorage(); }
+      function autoSave() { 
+        saveToStorage(); 
+        uploadToCloud(); // 每次本地儲存都上載到雲端
+      }
 
       // ---------- 天氣功能 (Open-Meteo) ----------
       const weatherCache = {
@@ -652,7 +765,7 @@
         });
       }
 
-      // ---------- 行程修改功能 (包含時間) ----------
+      // ---------- 行程修改功能 ----------
       function enableEditMode(dayIndex) {
         const day = appData.tripDays[dayIndex];
         const card = document.querySelectorAll('.day-card')[dayIndex];
@@ -661,13 +774,12 @@
         const oldPanel = detailsDiv.querySelector('.edit-panel');
         if (oldPanel) oldPanel.remove();
 
-        // 確保 times 陣列存在
         if (!day.times) day.times = day.details.map(() => '');
 
         const editPanel = document.createElement('div');
         editPanel.className = 'edit-panel';
         editPanel.innerHTML = `
-          <label>📝 簡潔標題</label>
+          <label>📝 重點行程</label>
           <input type="text" id="editTitle_${dayIndex}" value="${day.title.replace(/"/g, '&quot;')}" placeholder="例：關西機場→宇治→河原町">
           
           <label style="margin-top:10px;">📋 詳細行程項目（時間 + 描述 + 地圖）</label>
@@ -716,13 +828,11 @@
       };
 
       window.saveEdit = function(dayIndex) {
-        // 儲存標題
         const titleInput = document.getElementById(`editTitle_${dayIndex}`);
         if (titleInput && titleInput.value.trim()) {
           appData.tripDays[dayIndex].title = titleInput.value.trim();
         }
 
-        // 儲存詳細項目 + 時間
         const container = document.getElementById(`editItems_${dayIndex}`);
         const items = container.querySelectorAll('.edit-item');
         const newTimes = [];
@@ -750,7 +860,7 @@
         appData.tripDays[dayIndex].maps = newMaps;
         
         renderItinerary();
-        autoSave();
+        autoSave
       };
 
       // ---------- 行程渲染 ----------
@@ -957,10 +1067,17 @@
       // ---------- 初始化 ----------
       window.onload = function () {
         loadFromStorage();
-        renderItinerary();
-        updatePayerOptions();
-        renderExpenses();
-        document.getElementById('rateInput').value = appData.rate;
+        
+        // 先從雲端同步最新資料
+        downloadFromCloud(false).then(() => {
+          renderItinerary();
+          updatePayerOptions();
+          renderExpenses();
+          document.getElementById('rateInput').value = appData.rate;
+        });
+
+        // 手動同步按鈕
+        document.getElementById('manualSyncBtn').addEventListener('click', manualSync);
 
         document.querySelectorAll('.nav-btn').forEach(btn => {
           btn.addEventListener('click', (e) => {
@@ -982,6 +1099,16 @@
         window.deleteExpense = deleteExpense;
 
         document.querySelectorAll('input, select').forEach(el => el.addEventListener('change', autoSave));
+
+        // 定時從雲端同步（每5秒）
+        setInterval(() => {
+          downloadFromCloud(false);
+        }, SYNC_INTERVAL);
+        
+        // 頁面卸載時上載一次
+        window.addEventListener('beforeunload', () => {
+          uploadToCloud();
+        });
       };
     })();
   </script>
