@@ -563,10 +563,14 @@
       };
 
       // ---------- 雲端同步功能 ----------
+            // 🔧 修復版：上載時加入時間戳
       async function uploadToCloud() {
         if (isUploading) return;
         isUploading = true;
         try {
+          // 加入時間戳
+          appData._lastUpdated = Date.now();
+          
           const formData = new URLSearchParams();
           formData.append('action', 'save');
           formData.append('data', JSON.stringify(appData));
@@ -578,6 +582,7 @@
           
           if (response.ok) {
             lastCloudUpdate = Date.now();
+            saveToStorage(); // 儲存包含時間戳嘅版本
             document.getElementById('saveStatus').innerHTML = '☁️ 已同步';
             document.getElementById('syncStatus').textContent = '✅ 剛剛同步完成';
             setTimeout(() => {
@@ -591,24 +596,27 @@
         isUploading = false;
       }
 
+            // 🔧 修復版：加入時間戳，防止舊資料覆蓋新資料
       async function downloadFromCloud(showAlert = false) {
         try {
           const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=load&t=${Date.now()}`);
           const data = await response.json();
           
           if (data && Object.keys(data).length > 0 && data.tripDays) {
-            // 檢查雲端資料是否比本地新
-            const merged = { 
-              ...appData, 
-              ...data, 
-              settledItems: { ...appData.settledItems, ...(data.settledItems || {}) },
-              itineraryOpen: { ...appData.itineraryOpen, ...(data.itineraryOpen || {}) }
-            };
+            // 檢查雲端資料嘅時間戳
+            const cloudTimestamp = data._lastUpdated || 0;
+            const localTimestamp = appData._lastUpdated || 0;
             
-            const oldDataStr = JSON.stringify(appData);
-            const newDataStr = JSON.stringify(merged);
-            
-            if (oldDataStr !== newDataStr) {
+            // 🔴 只有當雲端資料比本地新嘅時候先更新
+            if (cloudTimestamp > localTimestamp) {
+              const merged = { 
+                ...appData,
+                ...data, 
+                settledItems: { ...appData.settledItems, ...(data.settledItems || {}) },
+                itineraryOpen: { ...appData.itineraryOpen, ...(data.itineraryOpen || {}) },
+                _lastUpdated: cloudTimestamp
+              };
+              
               appData = merged;
               saveToStorage();
               renderItinerary();
@@ -621,8 +629,12 @@
                 document.getElementById('saveStatus').innerHTML = '💾 已儲存';
               }, 2000);
               if (showAlert) alert('✅ 已從雲端同步最新資料！');
-            } else {
+            } else if (cloudTimestamp === localTimestamp) {
               document.getElementById('syncStatus').textContent = '⏱️ 資料已是最新';
+            } else {
+              // 本地比雲端新，上載本地版本
+              document.getElementById('syncStatus').textContent = '📤 本地版本較新，已上載';
+              uploadToCloud();
             }
           }
         } catch (e) {
@@ -659,9 +671,10 @@
         }
       }
 
-      function autoSave() { 
+      function autoSave() {
+        appData._lastUpdated = Date.now(); // 每次修改都更新時間戳
         saveToStorage(); 
-        uploadToCloud(); // 每次本地儲存都上載到雲端
+        uploadToCloud();
       }
 
       // ---------- 天氣功能 (Open-Meteo) ----------
