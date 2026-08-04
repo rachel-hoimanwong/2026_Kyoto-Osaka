@@ -535,10 +535,10 @@
         settledItems: {},
         memoOpen: {},
         memos: {
-          R: { title: 'Rachel', content: '' },
-          K: { title: 'Kingsley', content: '' },
-          M: { title: 'Mandy', content: '' },
-          C: { title: 'Charles', content: '' }
+          Rachel: { title: 'Rachel', content: '' },
+          Kingsley: { title: 'Kingsley', content: '' },
+          Mandy: { title: 'Mandy', content: '' },
+          Charles: { title: 'Charles', content: '' }
         },
         tripDays: [
           { 
@@ -922,7 +922,7 @@
         const editPanel = document.createElement('div');
         editPanel.className = 'edit-panel';
         editPanel.innerHTML = `
-          <label>📝 簡潔標題</label>
+          <label>📝 行程重點</label>
           <input type="text" id="editTitle_${dayIndex}" value="${day.title.replace(/"/g, '&quot;')}" placeholder="例：關西機場→宇治→河原町">
           
           <label style="margin-top:10px;">📋 詳細行程項目（時間 + 描述 + 地圖）</label>
