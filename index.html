@@ -80,6 +80,8 @@
       margin: 8px 16px;
       border-radius: 40px;
       box-shadow: 0 4px 8px rgba(255, 140, 160, 0.2);
+      flex-wrap: wrap;
+      gap: 4px;
     }
 
     .nav-btn {
@@ -89,13 +91,14 @@
       color: #b3546b;
       padding: 10px 14px;
       border-radius: 30px;
-      font-size: 14px;
+      font-size: 13px;
       display: flex;
       align-items: center;
       gap: 4px;
       cursor: pointer;
       transition: all 0.2s ease;
       background: #fff0f3;
+      white-space: nowrap;
     }
 
     .nav-btn.active {
@@ -235,6 +238,18 @@
       margin-bottom: 10px;
     }
 
+    .edit-panel textarea {
+      width: 100%;
+      border-radius: 16px;
+      border: 1px solid #ffb6c1;
+      padding: 10px;
+      font-family: inherit;
+      font-size: 13px;
+      min-height: 120px;
+      resize: vertical;
+      outline: none;
+    }
+
     .edit-item {
       display: flex;
       gap: 6px;
@@ -365,6 +380,33 @@
       cursor: pointer;
     }
 
+    .transport-option {
+      background: #fff5fb;
+      border-radius: 12px;
+      padding: 8px 12px;
+      margin: 4px 0;
+      border: 1px solid #ffd9e5;
+      font-size: 13px;
+    }
+
+    .transport-separator {
+      text-align: center;
+      color: #c94b6c;
+      font-size: 16px;
+      margin: 10px 0;
+      letter-spacing: 4px;
+    }
+
+    .transport-ps {
+      background: #ffeaf2;
+      border-radius: 12px;
+      padding: 8px 12px;
+      margin-top: 8px;
+      font-size: 11px;
+      color: #b3546b;
+      font-style: italic;
+    }
+
     hr {
       border: 0.5px solid #ffc0cb;
       margin: 12px 0;
@@ -410,12 +452,14 @@
       <button class="nav-btn active" data-section="itinerary">📅 行程</button>
       <button class="nav-btn" data-section="expenses">💰 記帳</button>
       <button class="nav-btn" data-section="calculator">🧮 匯率</button>
+      <button class="nav-btn" data-section="transport">🚃 交通</button>
+      <button class="nav-btn" data-section="memo">📝 備忘</button>
     </div>
 
     <!-- 同步控制按鈕 -->
     <div class="sync-controls">
       <button class="sync-btn" id="manualSyncBtn">🔄 手動同步</button>
-      <span style="color:#b3546b;" id="syncStatus">⏱️ 每5秒自動同步</span>
+      <span style="color:#b3546b;" id="syncStatus">⏱️ 每8秒自動同步</span>
     </div>
 
     <!-- 行程區 -->
@@ -456,6 +500,16 @@
       </div>
     </div>
 
+    <!-- 交通區 -->
+    <div id="transport" class="section">
+      <div id="transportContainer"></div>
+    </div>
+
+    <!-- 備忘區 -->
+    <div id="memo" class="section">
+      <div id="memoContainer"></div>
+    </div>
+
     <footer>
       🌸 天氣資料來源：Open-Meteo | 雲端同步：Google Sheets | Japan Travel © 2026
     </footer>
@@ -467,18 +521,25 @@
       const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwDr4_lFr3tht9Za1gxqkeBkZipvlULcDxLbFjzwAc4mGMuzOLX9HeD_3DKWQhJKuc/exec';
       // ----------------------------------------------------------------
       
-      const SYNC_INTERVAL = 5000; // 每5秒自動同步一次
+      const SYNC_INTERVAL = 8000; // 每8秒自動同步一次
       let isUploading = false;
       let lastCloudUpdate = null;
 
       // ---------- 儲存系統 ----------
-      const STORAGE_KEY = 'pinkTripKyotoOsaka_v5';
+      const STORAGE_KEY = 'pinkTripKyotoOsaka_v6';
       let appData = {
         itineraryOpen: {},
         expenses: [],
         people: ['A', 'B', 'C', 'D'],
         rate: 0.052,
         settledItems: {},
+        memoOpen: {},
+        memos: {
+          R: { title: 'R', content: '' },
+          K: { title: 'K', content: '' },
+          M: { title: 'M', content: '' },
+          C: { title: 'C', content: '' }
+        },
         tripDays: [
           { 
             date: "8/5 (三)", 
@@ -559,16 +620,71 @@
             ], 
             maps: ["黑門市場","Namba+Parks","關西國際機場"] 
           }
+        ],
+        // 交通資料
+        transportData: [
+          {
+            title: "💺 關西機場去京都 🚉",
+            options: [
+              "1. 🚌 搭利木津巴士：一程，￥2800，~90min（唔塞車時）",
+              "2. 🚄 搭JR：轉車（關西機場線→大阪站轉→東海道・山陽本線），￥1910，~95min",
+              "3. 🚝 搭JR HARUKA：一程，￥3590，~80min"
+            ],
+            hasSeparator: false,
+            ps: ""
+          },
+          {
+            title: "💺 京都去大阪梅田 🚉",
+            options: [
+              "1. 🚆 搭JR東海道・山陽本線：一程，￥570，~29min",
+              "2. 🚃 搭阪急京都線：一程，￥410，~43min（河原町→梅田）",
+              "3. 🚋 搭京阪電車→轉地鐵：京阪本線→淀屋橋轉→御堂筋線，￥460，~50min"
+            ],
+            hasSeparator: false,
+            ps: ""
+          },
+          {
+            title: "💺 京都去大阪難波 🚉",
+            options: [
+              "1. 🚃 搭阪急京都線→轉地鐵：河原町→梅田轉→御堂筋線，￥610，~55min",
+              "2. 🚋 搭京阪電車→轉地鐵：京阪本線→淀屋橋轉→御堂筋線，￥580，~60min",
+              "3. 🚆 搭JR→轉地鐵：京都站→大阪站轉→御堂筋線，￥800，~50min"
+            ],
+            hasSeparator: false,
+            ps: ""
+          },
+          {
+            title: "💺 大阪難波去關西機場 🚉",
+            options: [
+              "1. 🚝 搭南海Rapi:t特急：一程，￥1450，~38min",
+              "2. 🚃 搭南海本線（急行）：一程，￥930，~45min",
+              "3. 🚌 搭利木津巴士：一程，￥1600，~50min（唔塞車時）"
+            ],
+            hasSeparator: false,
+            ps: ""
+          },
+          {
+            title: "💺 大阪難波去關西機場（先去臨空城Outlet） 🛍️",
+            optionsPart1: [
+              "1. 🚃 搭南海本線（急行）：難波→臨空城，￥770，~35min",
+              "2. 🚝 搭南海Rapi:t特急：難波→臨空城，￥1450，~30min",
+              "3. 🚌 搭利木津巴士：難波→臨空城Outlet，￥1600，~45min"
+            ],
+            optionsPart2: [
+              "1. 🚃 搭南海本線（普通）：臨空城→關西機場，￥370，~5min",
+              "2. 🚝 搭JR關空快速：臨空城→關西機場，￥400，~5min"
+            ],
+            hasSeparator: true,
+            ps: "P.S. 臨空城站有行李locker，站外邊都有舖頭寄存行李 🧳"
+          }
         ]
       };
 
       // ---------- 雲端同步功能 ----------
-            // 🔧 修復版：上載時加入時間戳
       async function uploadToCloud() {
         if (isUploading) return;
         isUploading = true;
         try {
-          // 加入時間戳
           appData._lastUpdated = Date.now();
           
           const formData = new URLSearchParams();
@@ -580,14 +696,20 @@
             body: formData
           });
           
-          if (response.ok) {
-            lastCloudUpdate = Date.now();
-            saveToStorage(); // 儲存包含時間戳嘅版本
+          const result = await response.json();
+          
+          if (result.success) {
+            appData._lastUpdated = result.serverTimestamp;
+            lastCloudUpdate = result.serverTimestamp;
+            saveToStorage();
             document.getElementById('saveStatus').innerHTML = '☁️ 已同步';
-            document.getElementById('syncStatus').textContent = '✅ 剛剛同步完成';
+            document.getElementById('syncStatus').textContent = '✅ 已同步到雲端';
             setTimeout(() => {
               document.getElementById('saveStatus').innerHTML = '💾 已儲存';
             }, 2000);
+          } else if (result.message === '版本過舊，請先同步最新資料') {
+            document.getElementById('syncStatus').textContent = '⚠️ 版本衝突，正在同步...';
+            await downloadFromCloud(true);
           }
         } catch (e) {
           console.log('☁️ 上載失敗:', e);
@@ -596,45 +718,49 @@
         isUploading = false;
       }
 
-            // 🔧 修復版：加入時間戳，防止舊資料覆蓋新資料
       async function downloadFromCloud(showAlert = false) {
         try {
           const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=load&t=${Date.now()}`);
           const data = await response.json();
           
           if (data && Object.keys(data).length > 0 && data.tripDays) {
-            // 檢查雲端資料嘅時間戳
-            const cloudTimestamp = data._lastUpdated || 0;
+            const cloudTimestamp = data._serverTimestamp || 0;
             const localTimestamp = appData._lastUpdated || 0;
             
-            // 🔴 只有當雲端資料比本地新嘅時候先更新
             if (cloudTimestamp > localTimestamp) {
               const merged = { 
                 ...appData,
                 ...data, 
                 settledItems: { ...appData.settledItems, ...(data.settledItems || {}) },
                 itineraryOpen: { ...appData.itineraryOpen, ...(data.itineraryOpen || {}) },
-                _lastUpdated: cloudTimestamp
+                memoOpen: { ...appData.memoOpen, ...(data.memoOpen || {}) },
+                _lastUpdated: cloudTimestamp,
+                _serverTimestamp: cloudTimestamp
               };
               
-              appData = merged;
-              saveToStorage();
-              renderItinerary();
-              renderExpenses();
-              updateItineraryWeather();
-              document.getElementById('rateInput').value = appData.rate;
-              document.getElementById('saveStatus').innerHTML = '☁️ 已更新';
-              document.getElementById('syncStatus').textContent = '📥 已從雲端接收更新';
-              setTimeout(() => {
-                document.getElementById('saveStatus').innerHTML = '💾 已儲存';
-              }, 2000);
-              if (showAlert) alert('✅ 已從雲端同步最新資料！');
+              const oldDataStr = JSON.stringify({...appData, _lastUpdated: null, _serverTimestamp: null});
+              const newDataStr = JSON.stringify({...merged, _lastUpdated: null, _serverTimestamp: null});
+              
+              if (oldDataStr !== newDataStr) {
+                appData = merged;
+                saveToStorage();
+                renderItinerary();
+                renderExpenses();
+                renderTransport();
+                renderMemos();
+                updateItineraryWeather();
+                document.getElementById('rateInput').value = appData.rate;
+                document.getElementById('saveStatus').innerHTML = '☁️ 已更新';
+                document.getElementById('syncStatus').textContent = '📥 已接收雲端更新';
+                setTimeout(() => {
+                  document.getElementById('saveStatus').innerHTML = '💾 已儲存';
+                }, 2000);
+                if (showAlert) alert('✅ 已從雲端同步最新資料！');
+              } else {
+                document.getElementById('syncStatus').textContent = '⏱️ 資料已是最新';
+              }
             } else if (cloudTimestamp === localTimestamp) {
-              document.getElementById('syncStatus').textContent = '⏱️ 資料已是最新';
-            } else {
-              // 本地比雲端新，上載本地版本
-              document.getElementById('syncStatus').textContent = '📤 本地版本較新，已上載';
-              uploadToCloud();
+              document.getElementById('syncStatus').textContent = '⏱️ 資料已同步';
             }
           }
         } catch (e) {
@@ -643,7 +769,6 @@
         }
       }
 
-      // 手動同步按鈕
       function manualSync() {
         document.getElementById('syncStatus').textContent = '🔄 同步中...';
         Promise.all([uploadToCloud(), downloadFromCloud(true)]).then(() => {
@@ -654,7 +779,7 @@
       // ---------- 儲存系統 ----------
       function saveToStorage() {
         try {
-          const payload = { ...appData, version: 5 };
+          const payload = { ...appData, version: 6 };
           localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
         } catch (e) {
           console.log('本地儲存失敗');
@@ -672,7 +797,7 @@
       }
 
       function autoSave() {
-        appData._lastUpdated = Date.now(); // 每次修改都更新時間戳
+        appData._lastUpdated = Date.now();
         saveToStorage(); 
         uploadToCloud();
       }
@@ -792,7 +917,7 @@
         const editPanel = document.createElement('div');
         editPanel.className = 'edit-panel';
         editPanel.innerHTML = `
-          <label>📝 重點行程</label>
+          <label>📝 簡潔標題</label>
           <input type="text" id="editTitle_${dayIndex}" value="${day.title.replace(/"/g, '&quot;')}" placeholder="例：關西機場→宇治→河原町">
           
           <label style="margin-top:10px;">📋 詳細行程項目（時間 + 描述 + 地圖）</label>
@@ -873,12 +998,13 @@
         appData.tripDays[dayIndex].maps = newMaps;
         
         renderItinerary();
-        autoSave
+        autoSave();
       };
 
       // ---------- 行程渲染 ----------
       function renderItinerary() {
         const container = document.getElementById('daysContainer');
+        if (!container) return;
         container.innerHTML = appData.tripDays.map((day, idx) => {
           const isOpen = appData.itineraryOpen[idx] || false;
           return `
@@ -923,6 +1049,68 @@
 
       window.triggerEdit = function(dayIndex) {
         enableEditMode(dayIndex);
+      };
+
+      // ---------- 交通渲染 ----------
+      function renderTransport() {
+        const container = document.getElementById('transportContainer');
+        if (!container) return;
+        container.innerHTML = appData.transportData.map((t, idx) => `
+          <div class="day-card">
+            <div class="day-title" style="margin-bottom:10px;">${t.title}</div>
+            ${t.hasSeparator ? 
+              (t.optionsPart1 || []).map(o => `<div class="transport-option">${o}</div>`).join('') + 
+              '<div class="transport-separator">👜🛒👜🛒👜🛒👜🛒👜🛒👜🛒</div>' + 
+              (t.optionsPart2 || []).map(o => `<div class="transport-option">${o}</div>`).join('')
+              : 
+              t.options.map(o => `<div class="transport-option">${o}</div>`).join('')
+            }
+            ${t.ps ? `<div class="transport-ps">${t.ps}</div>` : ''}
+          </div>
+        `).join('');
+      }
+
+      // ---------- 備忘渲染 ----------
+      function renderMemos() {
+        const container = document.getElementById('memoContainer');
+        if (!container) return;
+        const memos = appData.memos || { R: {title:'R',content:''}, K: {title:'K',content:''}, M: {title:'M',content:''}, C: {title:'C',content:''} };
+        container.innerHTML = Object.entries(memos).map(([key, memo]) => {
+          const isOpen = appData.memoOpen && appData.memoOpen[key] || false;
+          return `
+            <div class="day-card">
+              <div class="day-header" data-memokey="${key}">
+                <span class="day-title">📝 ${memo.title || key}</span>
+              </div>
+              <div class="trip-details" style="display:${isOpen ? 'block' : 'none'};">
+                <div style="white-space:pre-wrap; font-size:13px; color:#4a2c38;">${memo.content || '（未有內容）'}</div>
+                <button class="edit-btn" onclick="window.editMemo('${key}')">✏️ 編輯備忘</button>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        document.querySelectorAll('#memoContainer .day-header').forEach(header => {
+          header.addEventListener('click', (e) => {
+            const key = header.dataset.memokey;
+            if (!appData.memoOpen) appData.memoOpen = {};
+            appData.memoOpen[key] = !appData.memoOpen[key];
+            renderMemos();
+            autoSave();
+          });
+        });
+      }
+
+      window.editMemo = function(key) {
+        if (!appData.memos) appData.memos = { R:{title:'R',content:''}, K:{title:'K',content:''}, M:{title:'M',content:''}, C:{title:'C',content:''} };
+        const memo = appData.memos[key] || { title: key, content: '' };
+        const newContent = prompt(`編輯備忘：${memo.title}`, memo.content || '');
+        if (newContent !== null) {
+          memo.content = newContent;
+          appData.memos[key] = memo;
+          renderMemos();
+          autoSave();
+        }
       };
 
       // ---------- 記帳邏輯 ----------
@@ -1005,6 +1193,7 @@
 
       function renderExpenses() {
         const list = document.getElementById('expenseList');
+        if (!list) return;
         list.innerHTML = appData.expenses.map(exp => {
           const settled = appData.settledItems[exp.id];
           return `
@@ -1041,6 +1230,7 @@
         const balance = calculateFinal();
         const rate = appData.rate;
         const summaryDiv = document.getElementById('finalSummary');
+        if (!summaryDiv) return;
         let html = '<div><strong>🧾 最終結算 (未結清項目)</strong></div>';
         const entries = Object.entries(balance);
         if (entries.length === 0) { html += '<div>無待結算項目</div>'; }
@@ -1081,15 +1271,15 @@
       window.onload = function () {
         loadFromStorage();
         
-        // 先從雲端同步最新資料
         downloadFromCloud(false).then(() => {
           renderItinerary();
+          renderTransport();
+          renderMemos();
           updatePayerOptions();
           renderExpenses();
           document.getElementById('rateInput').value = appData.rate;
         });
 
-        // 手動同步按鈕
         document.getElementById('manualSyncBtn').addEventListener('click', manualSync);
 
         document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -1113,12 +1303,10 @@
 
         document.querySelectorAll('input, select').forEach(el => el.addEventListener('change', autoSave));
 
-        // 定時從雲端同步（每5秒）
         setInterval(() => {
           downloadFromCloud(false);
         }, SYNC_INTERVAL);
         
-        // 頁面卸載時上載一次
         window.addEventListener('beforeunload', () => {
           uploadToCloud();
         });
