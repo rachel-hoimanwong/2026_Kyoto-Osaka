@@ -1082,7 +1082,7 @@
       function renderMemos() {
         const container = document.getElementById('memoContainer');
         if (!container) return;
-        const memos = appData.memos || { R: {title:'R',content:''}, K: {title:'K',content:''}, M: {title:'M',content:''}, C: {title:'C',content:''} };
+        const memos = appData.memos || { Rachel: {title:'Rachel',content:''}, Kingsley: {title:'Kingsley',content:''}, Mandy: {title:'Mandy',content:''}, Charles: {title:'Charles',content:''} };
         container.innerHTML = Object.entries(memos).map(([key, memo]) => {
           const isOpen = appData.memoOpen && appData.memoOpen[key] || false;
           return `
