@@ -5,449 +5,61 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, shrink-to-fit=yes">
   <title>🌸 京都 · 大阪 | 行程記帳管家仔</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      background: #ffeef8;
-      font-family: 'Quicksand', 'Zen Kaku Gothic New', 'Noto Sans HK', sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      min-height: 100vh;
-      padding: 16px;
-      margin: 0;
-    }
-
-    .phone-frame {
-      max-width: 420px;
-      width: 100%;
-      background: #fff0f5;
-      border-radius: 48px 48px 32px 32px;
-      box-shadow: 0 20px 35px rgba(255, 150, 180, 0.25);
-      overflow: hidden;
-      backdrop-filter: blur(10px);
-      border: 2px solid #ffc0cb;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-      background: linear-gradient(145deg, #fff5fb 0%, #ffe4ed 100%);
-    }
-
-    .status-bar {
-      padding: 12px 20px 6px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 12px;
-      color: #d46a7a;
-      background: #ffeaf2;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-    }
-
-    .save-indicator {
-      background: #ffd9e5;
-      padding: 4px 12px;
-      border-radius: 20px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .app-header {
-      padding: 10px 20px 5px;
-      text-align: left;
-    }
-
-    .app-header h1 {
-      font-size: 26px;
-      font-weight: 700;
-      color: #c94b6c;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .main-nav {
-      display: flex;
-      justify-content: space-around;
-      background: #ffe4ed;
-      padding: 6px 8px;
-      margin: 8px 12px;
-      border-radius: 40px;
-      box-shadow: 0 4px 8px rgba(255, 140, 160, 0.2);
-      flex-wrap: nowrap;
-      gap: 2px;
-    }
-
-    .nav-btn {
-      background: transparent;
-      border: none;
-      font-weight: 600;
-      color: #b3546b;
-      padding: 6px 8px;
-      border-radius: 30px;
-      font-size: 11px;
-      display: flex;
-      align-items: center;
-      gap: 2px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      background: #fff0f3;
-      white-space: nowrap;
-    }
-
-    .nav-btn.active {
-      background: #ffb6c1;
-      color: white;
-      box-shadow: 0 6px 12px #ff99aa;
-      font-weight: 700;
-    }
-
-    .section {
-      display: none;
-      padding: 0 18px 20px;
-      flex: 1;
-      overflow-y: auto;
-      max-height: 600px;
-    }
-
-    .section.active {
-      display: block;
-    }
-
-    .day-card {
-      background: #ffffffdd;
-      backdrop-filter: blur(12px);
-      border-radius: 28px;
-      padding: 12px 16px;
-      margin-bottom: 14px;
-      box-shadow: 0 8px 18px rgba(255, 140, 160, 0.15);
-      border: 1px solid #ffb6c1;
-    }
-
-    .day-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      cursor: pointer;
-    }
-
-    .day-title {
-      font-weight: 700;
-      color: #b34465;
-      font-size: 14px;
-    }
-
-    .weather-tag {
-      background: #ffd9e5;
-      border-radius: 30px;
-      padding: 2px 12px;
-      font-size: 12px;
-      color: #b34465;
-      white-space: nowrap;
-    }
-
-    .weather-tag.loading {
-      opacity: 0.6;
-      font-style: italic;
-    }
-
-    .trip-details {
-      margin-top: 10px;
-      font-size: 14px;
-      color: #4a2c38;
-      border-top: 1px dashed #ffb6c1;
-      padding-top: 8px;
-    }
-
-    .timeline-item {
-      display: flex;
-      align-items: baseline;
-      gap: 8px;
-      margin: 6px 0;
-    }
-
-    .item-time {
-      font-weight: 700;
-      color: #c94b6c;
-      background: #ffe4ed;
-      padding: 2px 10px;
-      border-radius: 14px;
-      font-size: 12px;
-      min-width: 70px;
-      text-align: center;
-      white-space: nowrap;
-    }
-
-    .item-desc {
-      flex: 1;
-    }
-
-    .map-link {
-      background: #ffc0cb;
-      border: none;
-      padding: 4px 10px;
-      border-radius: 16px;
-      font-size: 12px;
-      margin-left: 6px;
-      color: white;
-      text-decoration: none;
-      display: inline-block;
-    }
-
-    .edit-btn {
-      background: #ffb6c1;
-      color: white;
-      border: none;
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      margin-top: 10px;
-      transition: 0.2s;
-    }
-
-    .edit-btn:hover {
-      background: #ff99aa;
-    }
-
-    .edit-panel {
-      background: #fff5fb;
-      border-radius: 20px;
-      padding: 12px;
-      margin-top: 10px;
-      border: 1px dashed #ffb6c1;
-    }
-
-    .edit-panel label {
-      font-size: 12px;
-      color: #b3546b;
-      font-weight: 600;
-      display: block;
-      margin-bottom: 4px;
-    }
-
-    .edit-panel input[type="text"] {
-      width: 100%;
-      margin-bottom: 10px;
-    }
-
-    .edit-panel textarea {
-      width: 100%;
-      border-radius: 16px;
-      border: 1px solid #ffb6c1;
-      padding: 10px;
-      font-family: inherit;
-      font-size: 13px;
-      min-height: 120px;
-      resize: vertical;
-      outline: none;
-    }
-
-    .edit-item {
-      display: flex;
-      gap: 6px;
-      align-items: center;
-      margin-bottom: 8px;
-      flex-wrap: wrap;
-      background: #ffffffba;
-      padding: 8px;
-      border-radius: 16px;
-      border: 1px solid #ffd9e5;
-    }
-
-    .edit-item input.time-input {
-      width: 75px;
-      min-width: 75px;
-      text-align: center;
-    }
-
-    .edit-item input.detail-input {
-      flex: 2;
-      min-width: 100px;
-    }
-
-    .edit-item input.map-input {
-      flex: 1.5;
-      min-width: 90px;
-    }
-
-    .remove-item-btn {
-      background: #e0b0b0;
-      border: none;
-      color: white;
-      border-radius: 50%;
-      width: 26px;
-      height: 26px;
-      font-size: 14px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-
-    .add-item-btn {
-      background: #ffc0cb;
-      border: none;
-      color: white;
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-size: 12px;
-      margin-top: 6px;
-      cursor: pointer;
-    }
-
-    .save-edit-btn {
-      background: #d46a7a;
-      color: white;
-      border: none;
-      padding: 8px 18px;
-      border-radius: 20px;
-      font-weight: 600;
-      margin-top: 8px;
-      cursor: pointer;
-      width: 100%;
-    }
-
-    .expense-card {
-      background: #ffffffec;
-      border-radius: 20px;
-      padding: 14px;
-      margin: 10px 0;
-      border: 1px solid #ffb7c3;
-    }
-
-    .flex-row {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    input,
-    select,
-    button {
-      font-family: inherit;
-      border-radius: 20px;
-      border: 1px solid #ffb6c1;
-      padding: 8px 12px;
-      background: white;
-      font-size: 13px;
-      outline: none;
-    }
-
-    button {
-      background: #ffb6c1;
-      color: white;
-      border: none;
-      font-weight: 600;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-
-    button:hover {
-      background: #ff99aa;
-    }
-
-    .settled-line {
-      text-decoration: line-through;
-      opacity: 0.7;
-    }
-
-    .sync-controls {
-      display: flex;
-      gap: 8px;
-      justify-content: center;
-      padding: 6px 18px;
-      background: #ffeaf2;
-      font-size: 11px;
-    }
-
-    .sync-btn {
-      background: #ffc0cb;
-      color: white;
-      border: none;
-      padding: 4px 12px;
-      border-radius: 14px;
-      font-size: 11px;
-      cursor: pointer;
-    }
-
-    .transport-option {
-      background: #fff5fb;
-      border-radius: 12px;
-      padding: 8px 12px;
-      margin: 4px 0;
-      border: 1px solid #ffd9e5;
-      font-size: 13px;
-    }
-
-    .transport-separator {
-      text-align: center;
-      color: #c94b6c;
-      font-size: 16px;
-      margin: 10px 0;
-      letter-spacing: 4px;
-    }
-
-    .transport-ps {
-      background: #ffeaf2;
-      border-radius: 12px;
-      padding: 8px 12px;
-      margin-top: 8px;
-      font-size: 11px;
-      color: #b3546b;
-      font-style: italic;
-    }
-
-    hr {
-      border: 0.5px solid #ffc0cb;
-      margin: 12px 0;
-    }
-
-    .small-text {
-      font-size: 11px;
-      color: #b3546b;
-    }
-
-    footer {
-      text-align: center;
-      padding: 10px 18px;
-      color: #b3546b;
-      font-size: 11px;
-      background: #ffeaf2;
-      border-top: 1px solid #ffb6c1;
-      margin-top: 8px;
-    }
-
-    @media (max-width: 400px) {
-      .flex-row {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-      .edit-item {
-        flex-direction: column;
-      }
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #ffeef8; font-family: 'Quicksand', 'Zen Kaku Gothic New', 'Noto Sans HK', sans-serif; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; padding: 16px; margin: 0; }
+    .phone-frame { max-width: 420px; width: 100%; background: #fff0f5; border-radius: 48px 48px 32px 32px; box-shadow: 0 20px 35px rgba(255,150,180,0.25); overflow: hidden; backdrop-filter: blur(10px); border: 2px solid #ffc0cb; display: flex; flex-direction: column; position: relative; background: linear-gradient(145deg, #fff5fb 0%, #ffe4ed 100%); }
+    .status-bar { padding: 12px 20px 6px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #d46a7a; background: #ffeaf2; font-weight: 600; letter-spacing: 0.5px; }
+    .save-indicator { background: #ffd9e5; padding: 4px 12px; border-radius: 20px; display: flex; align-items: center; gap: 4px; }
+    .app-header { padding: 10px 20px 5px; text-align: left; }
+    .app-header h1 { font-size: 26px; font-weight: 700; color: #c94b6c; display: flex; align-items: center; gap: 8px; }
+    .main-nav { display: flex; justify-content: space-around; background: #ffe4ed; padding: 6px 8px; margin: 8px 12px; border-radius: 40px; box-shadow: 0 4px 8px rgba(255,140,160,0.2); flex-wrap: nowrap; gap: 2px; }
+    .nav-btn { background: transparent; border: none; font-weight: 600; color: #b3546b; padding: 6px 8px; border-radius: 30px; font-size: 11px; display: flex; align-items: center; gap: 2px; cursor: pointer; transition: all 0.2s ease; background: #fff0f3; white-space: nowrap; }
+    .nav-btn.active { background: #ffb6c1; color: white; box-shadow: 0 6px 12px #ff99aa; font-weight: 700; }
+    .section { display: none; padding: 0 18px 20px; flex: 1; overflow-y: auto; max-height: 600px; }
+    .section.active { display: block; }
+    .day-card { background: #ffffffdd; backdrop-filter: blur(12px); border-radius: 28px; padding: 12px 16px; margin-bottom: 14px; box-shadow: 0 8px 18px rgba(255,140,160,0.15); border: 1px solid #ffb6c1; }
+    .day-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+    .day-title { font-weight: 700; color: #b34465; font-size: 14px; }
+    .weather-tag { background: #ffd9e5; border-radius: 30px; padding: 2px 12px; font-size: 12px; color: #b34465; white-space: nowrap; }
+    .weather-tag.loading { opacity: 0.6; font-style: italic; }
+    .trip-details { margin-top: 10px; font-size: 14px; color: #4a2c38; border-top: 1px dashed #ffb6c1; padding-top: 8px; }
+    .timeline-item { display: flex; align-items: baseline; gap: 8px; margin: 6px 0; }
+    .item-time { font-weight: 700; color: #c94b6c; background: #ffe4ed; padding: 2px 10px; border-radius: 14px; font-size: 12px; min-width: 70px; text-align: center; white-space: nowrap; }
+    .item-desc { flex: 1; }
+    .map-link { background: #ffc0cb; border: none; padding: 4px 10px; border-radius: 16px; font-size: 12px; margin-left: 6px; color: white; text-decoration: none; display: inline-block; }
+    .edit-btn { background: #ffb6c1; color: white; border: none; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; margin-top: 10px; transition: 0.2s; }
+    .edit-btn:hover { background: #ff99aa; }
+    .edit-panel { background: #fff5fb; border-radius: 20px; padding: 12px; margin-top: 10px; border: 1px dashed #ffb6c1; }
+    .edit-panel label { font-size: 12px; color: #b3546b; font-weight: 600; display: block; margin-bottom: 4px; }
+    .edit-panel input[type="text"] { width: 100%; margin-bottom: 10px; }
+    .edit-panel textarea { width: 100%; border-radius: 16px; border: 1px solid #ffb6c1; padding: 10px; font-family: inherit; font-size: 13px; min-height: 120px; resize: vertical; outline: none; }
+    .edit-item { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; background: #ffffffba; padding: 8px; border-radius: 16px; border: 1px solid #ffd9e5; }
+    .edit-item input.time-input { width: 75px; min-width: 75px; text-align: center; }
+    .edit-item input.detail-input { flex: 2; min-width: 100px; }
+    .edit-item input.map-input { flex: 1.5; min-width: 90px; }
+    .remove-item-btn { background: #e0b0b0; border: none; color: white; border-radius: 50%; width: 26px; height: 26px; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .add-item-btn { background: #ffc0cb; border: none; color: white; padding: 6px 14px; border-radius: 20px; font-size: 12px; margin-top: 6px; cursor: pointer; }
+    .save-edit-btn { background: #d46a7a; color: white; border: none; padding: 8px 18px; border-radius: 20px; font-weight: 600; margin-top: 8px; cursor: pointer; width: 100%; }
+    .expense-card { background: #ffffffec; border-radius: 20px; padding: 14px; margin: 10px 0; border: 1px solid #ffb7c3; }
+    .flex-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    input, select, button { font-family: inherit; border-radius: 20px; border: 1px solid #ffb6c1; padding: 8px 12px; background: white; font-size: 13px; outline: none; }
+    button { background: #ffb6c1; color: white; border: none; font-weight: 600; cursor: pointer; transition: 0.2s; }
+    button:hover { background: #ff99aa; }
+    .settled-line { text-decoration: line-through; opacity: 0.7; }
+    .sync-controls { display: flex; gap: 8px; justify-content: center; padding: 6px 18px; background: #ffeaf2; font-size: 11px; }
+    .sync-btn { background: #ffc0cb; color: white; border: none; padding: 4px 12px; border-radius: 14px; font-size: 11px; cursor: pointer; }
+    .transport-option { background: #fff5fb; border-radius: 12px; padding: 8px 12px; margin: 4px 0; border: 1px solid #ffd9e5; font-size: 13px; }
+    .transport-separator { text-align: center; color: #c94b6c; font-size: 16px; margin: 10px 0; letter-spacing: 4px; }
+    .transport-ps { background: #ffeaf2; border-radius: 12px; padding: 8px 12px; margin-top: 8px; font-size: 11px; color: #b3546b; font-style: italic; }
+    hr { border: 0.5px solid #ffc0cb; margin: 12px 0; }
+    footer { text-align: center; padding: 10px 18px; color: #b3546b; font-size: 11px; background: #ffeaf2; border-top: 1px solid #ffb6c1; margin-top: 8px; }
+    @media (max-width: 400px) { .flex-row { flex-direction: column; align-items: flex-start; } .edit-item { flex-direction: column; } }
   </style>
 </head>
 <body>
   <div class="phone-frame">
-    <div class="status-bar">
-      <span>🌸 京都・大阪</span>
-      <span class="save-indicator" id="saveStatus">💾 已儲存</span>
-    </div>
-    <div class="app-header">
-      <h1>🍡 京阪食同玩 <span style="font-size:14px;">唔洗瞓🫨🫨</span></h1>
-    </div>
-
+    <div class="status-bar"><span>🌸 京都・大阪</span><span class="save-indicator" id="saveStatus">💾 已儲存</span></div>
+    <div class="app-header"><h1>🍡 京阪食同玩 <span style="font-size:14px;">唔洗瞓🫨🫨</span></h1></div>
     <div class="main-nav">
       <button class="nav-btn active" data-section="itinerary">📅 行程</button>
       <button class="nav-btn" data-section="expenses">💰 記帳</button>
@@ -455,700 +67,126 @@
       <button class="nav-btn" data-section="transport">🚃 交通</button>
       <button class="nav-btn" data-section="memo">📝 備忘</button>
     </div>
-
-    <div class="sync-controls">
-      <button class="sync-btn" id="manualSyncBtn">🔄 手動同步</button>
-      <span style="color:#b3546b;" id="syncStatus">⏱️ 每8秒自動同步</span>
-    </div>
-
-    <div id="itinerary" class="section active">
-      <div id="daysContainer"></div>
-    </div>
-
+    <div class="sync-controls"><button class="sync-btn" id="manualSyncBtn">🔄 手動同步</button><span style="color:#b3546b;" id="syncStatus">⏱️ 每8秒自動同步</span></div>
+    <div id="itinerary" class="section active"><div id="daysContainer"></div></div>
     <div id="expenses" class="section">
-      <div style="margin-bottom:16px; display:flex; gap:8px;">
-        <input type="text" id="expenseName" placeholder="項目名稱 (例: 午餐)" style="flex:2;">
-        <input type="number" id="totalAmount" placeholder="總額" step="1" style="flex:1;">
-      </div>
-      <div class="flex-row">
-        <select id="currencySelect"><option value="JPY">日圓 ¥</option><option value="HKD">港幣 HK$</option></select>
-        <input type="number" id="peopleCount" placeholder="人數" value="2" min="2" max="4" style="width:70px;">
-        <select id="splitMode"><option value="equal">人均</option><option value="custom">分開付</option></select>
-        <select id="payerSelect"><option>付款人</option></select>
-      </div>
-      <div id="customAmounts" style="display:none; margin-top:8px;"></div>
-      <button id="addExpenseBtn" style="margin-top:10px; width:100%;">➕ 新增帳目</button>
+      <div style="margin-bottom:16px;display:flex;gap:8px;"><input type="text" id="expenseName" placeholder="項目名稱" style="flex:2;"><input type="number" id="totalAmount" placeholder="總額" step="1" style="flex:1;"></div>
+      <div class="flex-row"><select id="currencySelect"><option value="JPY">日圓 ¥</option><option value="HKD">港幣 HK$</option></select><input type="number" id="peopleCount" value="2" min="2" max="4" style="width:70px;"><select id="splitMode"><option value="equal">人均</option><option value="custom">分開付</option></select><select id="payerSelect"><option>付款人</option></select></div>
+      <div id="customAmounts" style="display:none;margin-top:8px;"></div>
+      <button id="addExpenseBtn" style="margin-top:10px;width:100%;">➕ 新增帳目</button>
       <div id="expenseList" style="margin-top:14px;"></div>
-      <button id="settleAllBtn" style="background:#d46a7a; margin-top:12px; width:100%;">📋 最終結算明細</button>
-      <div id="finalSummary" style="margin-top:10px; background:#fff0f3; border-radius:20px; padding:12px;"></div>
+      <button id="settleAllBtn" style="background:#d46a7a;margin-top:12px;width:100%;">📋 最終結算明細</button>
+      <div id="finalSummary" style="margin-top:10px;background:#fff0f3;border-radius:20px;padding:12px;"></div>
     </div>
-
     <div id="calculator" class="section">
-      <div style="background: #fff0f5; border-radius: 24px; padding: 18px;">
-        <label>🌸 匯率設定 (每1日圓兌港幣)</label>
-        <input type="number" id="rateInput" step="0.0001" value="0.052" style="width:100%; margin:6px 0;">
-        <div class="flex-row">
-          <input type="number" id="jpyInput" placeholder="日圓" style="flex:1;">
-          <span>⇄</span>
-          <input type="number" id="hkdInput" placeholder="港幣" style="flex:1;">
-        </div>
-        <button id="convertBtn" style="margin-top:8px; width:100%;">🔄 換算</button>
-      </div>
+      <div style="background:#fff0f5;border-radius:24px;padding:18px;"><label>🌸 匯率設定 (每1日圓兌港幣)</label><input type="number" id="rateInput" step="0.0001" value="0.052" style="width:100%;margin:6px 0;"><div class="flex-row"><input type="number" id="jpyInput" placeholder="日圓" style="flex:1;"><span>⇄</span><input type="number" id="hkdInput" placeholder="港幣" style="flex:1;"></div><button id="convertBtn" style="margin-top:8px;width:100%;">🔄 換算</button></div>
     </div>
-
-    <div id="transport" class="section">
-      <div id="transportContainer"></div>
-    </div>
-
-    <div id="memo" class="section">
-      <div id="memoContainer"></div>
-    </div>
-
-    <footer>
-      🌸 天氣資料來源：Open-Meteo | 雲端同步：Google Sheets | Japan Travel © 2026
-    </footer>
+    <div id="transport" class="section"><div id="transportContainer"></div></div>
+    <div id="memo" class="section"><div id="memoContainer"></div></div>
+    <footer>🌸 天氣資料來源：Open-Meteo | 雲端同步：Google Sheets | Japan Travel © 2026</footer>
   </div>
-
   <script>
     (function () {
-      // ---------- 🔴 貼上你嘅 Google Apps Script URL ----------
       const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwDr4_lFr3tht9Za1gxqkeBkZipvlULcDxLbFjzwAc4mGMuzOLX9HeD_3DKWQhJKuc/exec';
-      // --------------------------------------------------------
-      
       const SYNC_INTERVAL = 8000;
       let isUploading = false;
-      let lastCloudUpdate = null;
 
-      // 全新儲存 key，強制唔用舊 cache
-      const STORAGE_KEY = 'pinkTripKyotoOsaka_v7';
+      const STORAGE_KEY = 'pinkTripKyotoOsaka_v8';
 
-      // 預設資料（已修正所有 bug）
       let appData = {
-        itineraryOpen: {},
-        expenses: [],
-        people: ['Rachel', 'Kingsley', 'Mandy', 'Charles'],
-        rate: 0.052,
-        settledItems: {},
-        memoOpen: {},
-        memos: {
-          Rachel: { title: 'Rachel', content: '' },
-          Kingsley: { title: 'Kingsley', content: '' },
-          Mandy: { title: 'Mandy', content: '' },
-          Charles: { title: 'Charles', content: '' }
-        },
+        itineraryOpen: {}, expenses: [],
+        people: ['Rachel', 'Kingsley', 'Mandy', 'Charles'], rate: 0.052, settledItems: {}, memoOpen: {},
+        memos: { Rachel: { title: 'Rachel', content: '' }, Kingsley: { title: 'Kingsley', content: '' }, Mandy: { title: 'Mandy', content: '' }, Charles: { title: 'Charles', content: '' } },
         tripDays: [
-          { 
-            date: "5/8 (三)", 
-            title: "關西機場→宇治→北野天滿宮→東山觀月路", 
-            times: ["06:30-10:30", "11:30-12:40", "12:45-16:00", "16:30-19:00"],
-            details: [
-              "🚆 搭JR Haruka至京都站，轉阪急至河原町站(2號出口)", 
-              "🍵 伊藤久右衛門 宇治本店", 
-              "⛩️ 宇治上神社・平等院", 
-              "🌙 祇園白川・八坂神社"
-            ], 
-            maps: ["京都河原町駅","伊藤久右衛門+宇治本店","宇治上神社","八坂神社"] 
-          },
-          { 
-            date: "6/8 (四)", 
-            title: "伏見稻荷→兩足院→下鴨神社夏越神事", 
-            times: ["11:00-13:30", "14:00-16:00", "16:30-20:00"],
-            details: [
-              "🚃 河原町→伏見稻荷(京阪電車)", 
-              "🐟 鰻魚飯午餐・兩足院・安井金比羅宮", 
-              "⛩️ 下鴨神社(蕾絲御守/夏越神事)"
-            ], 
-            maps: ["伏見稻荷大社","兩足院","下鴨神社"],
-            ps: "P.S. 下鴨神社 夏越神事"
-          },
-          { 
-            date: "7/8 (五)", 
-            title: "貴船神社・川床→北野天滿夏祭", 
-            times: ["10:00-11:30","11:30-13:30", "13:30-15:00", "15:00-15:45","15:45-16:15","16:15-19:00"],
-            details: [
-              "🚃 京都駅→寶池駅→貴船口駅→的士 or 205bus→貴船口駅→的士", 
-              "💧 貴船神社・水占卜・川床午餐", 
-              "🚌 貴船口駅→今宮神社 or 貴船口駅→下鴨神社→今宮神社",
-              "🕺 今宮神社・嫁個有錢佬",
-              "🚌 204/205bus 今宮神社→北野天滿宮", 
-              "🏮 北野天滿宮 七夕夏祭・御手洗川足event"
-            ], 
-            maps: ["貴船神社","貴船川床+ひろ文","今宮神社","今宮神社","北野天滿宮","北野天滿宮"],
-            ps: "P.S. 北野七夕祭，7/8-10/8 五条若宮陶器祭 ",
-            psMap: "五條通（大和大路至東大路之間）與若宮八幡宮"
-          },
-          { 
-            date: "8/8 (六)", 
-            title: "京都→大阪・teamLab", 
-            times: ["11:00-12:30", "12:30-14:00", "14:30-17:30", "18:30-21:00"],
-            details: [
-              "🚆 阪急梅田→難波", 
-              "🍽️ 味乃家大阪燒", 
-              "🌆 梅田茶屋町・OSA COFFEE", 
-              "✨ teamLab長居植物園"
-            ], 
-            maps: ["難波駅","味乃家","OSA+COFFEE","teamLab+Botanical+Garden+Osaka"] 
-          },
-          { 
-            date: "9/8 (日)", 
-            title: "住吉大社→心齋橋Sanrio", 
-            times: ["11:00-15:00", "15:30-17:30", "17:30-20:00"],
-            details: [
-              "⛩️ 住吉大社・大鳥大社", 
-              "🦁 難波八坂神社・御津宮", 
-              "🎀 Sanrio Gallery心齋橋"
-            ], 
-            maps: ["住吉大社","難波八坂神社","Sanrio+Gallery+心齋橋店"] 
-          },
-          { 
-            date: "10/8 (一)", 
-            title: "木津市場→海遊館→万博夏祭", 
-            times: ["10:30-12:30", "13:00-16:30", "17:30-21:00"],
-            details: [
-              "🐟 木津卸売市場", 
-              "🐋 海遊館・天保山", 
-              "🎆 万博記念公園夏祭"
-            ], 
-            maps: ["木津卸売市場","大阪海遊館","万博記念公園"],
-            ps: "P.S. 万博記念公園夏祭🏮得呢一日，唔去就冇㗎啦"  
-          },
-          { 
-            date: "11/8 (二)", 
-            title: "黑門市場→難波採買→關西機場", 
-            times: ["11:00-14:00", "14:00-17:00", "17:30-19:00"],
-            details: [
-              "🛍️ 黑門市場・Namba Parks", 
-              "🛒 高島屋・Bic Camera", 
-              "🚃 南海Rapi:t至關西機場T2"
-            ], 
-            maps: ["黑門市場","Namba+Parks","關西國際機場"] ,
-            ps: "P.S. 記住退稅！機場有行李磅 🧳 peach得20kg ⚖️"  //
-          }
+          { date: "8/5 (三)", title: "關西機場→宇治→北野天滿宮→東山觀月路", times: ["06:30-10:30","11:30-12:40","12:45-16:00","16:30-19:00"], details: ["🚆 搭JR Haruka至京都站，轉阪急至河原町站(2號出口)","🍵 伊藤久右衛門 宇治本店","⛩️ 宇治上神社・平等院","🌙 祇園白川・八坂神社"], maps: ["京都河原町駅","伊藤久右衛門+宇治本店","宇治上神社","八坂神社"] },
+          { date: "8/6 (四)", title: "伏見稻荷→兩足院→下鴨神社夏越神事", times: ["11:00-13:30","14:00-16:00","16:30-20:00"], details: ["🚃 河原町→伏見稻荷(京阪電車)","🐟 鰻魚飯午餐・兩足院・安井金比羅宮","⛩️ 下鴨神社(蕾絲御守/夏越神事)"], maps: ["伏見稻荷大社","兩足院","下鴨神社"], ps: "P.S. 下鴨神社 夏越神事" },
+          { date: "8/7 (五)", title: "貴船神社・川床→北野天滿夏祭", times: ["10:00-11:30","11:30-13:30","13:30-15:00","15:00-15:45","15:45-16:15","16:15-19:00"], details: ["🚃 京都駅→寶池駅→貴船口駅→的士 or 205bus→貴船口駅→的士","💧 貴船神社・水占卜・川床午餐","🚌 貴船口駅→今宮神社 or 貴船口駅→下鴨神社→今宮神社","🕺 今宮神社・嫁個有錢佬","🚌 204/205bus 今宮神社→北野天滿宮","🏮 北野天滿宮 七夕夏祭・御手洗川足event"], maps: ["貴船神社","貴船川床+ひろ文","今宮神社","今宮神社","北野天滿宮","北野天滿宮"], ps: "P.S. 北野七夕祭，7/8-10/8 五条若宮陶器祭 ", psMap: "五條通（大和大路至東大路之間）與若宮八幡宮" },
+          { date: "8/8 (六)", title: "京都→大阪・teamLab", times: ["11:00-12:30","12:30-14:00","14:30-17:30","18:30-21:00"], details: ["🚆 阪急梅田→難波","🍽️ 味乃家大阪燒","🌆 梅田茶屋町・OSA COFFEE","✨ teamLab長居植物園"], maps: ["難波駅","味乃家","OSA+COFFEE","teamLab+Botanical+Garden+Osaka"] },
+          { date: "8/9 (日)", title: "住吉大社→心齋橋Sanrio", times: ["11:00-15:00","15:30-17:30","17:30-20:00"], details: ["⛩️ 住吉大社・大鳥大社","🦁 難波八坂神社・御津宮","🎀 Sanrio Gallery心齋橋"], maps: ["住吉大社","難波八坂神社","Sanrio+Gallery+心齋橋店"] },
+          { date: "8/10 (一)", title: "木津市場→海遊館→万博夏祭", times: ["10:30-12:30","13:00-16:30","17:30-21:00"], details: ["🐟 木津卸売市場","🐋 海遊館・天保山","🎆 万博記念公園夏祭"], maps: ["木津卸売市場","大阪海遊館","万博記念公園"], ps: "P.S. 万博記念公園夏祭🏮得呢一日，唔去就冇㗎啦" },
+          { date: "8/11 (二)", title: "黑門市場→難波採買→關西機場", times: ["11:00-14:00","14:00-17:00","17:30-19:00"], details: ["🛍️ 黑門市場・Namba Parks","🛒 高島屋・Bic Camera","🚃 南海Rapi:t至關西機場T2"], maps: ["黑門市場","Namba+Parks","關西國際機場"], ps: "P.S. 記住退稅！機場有行李磅 🧳 peach得20kg ⚖️" }
         ],
         transportData: [
-          {
-            title: "💺 關西機場去京都 🚏",
-            map: "京都站",
-            options: [
-              "1. 🚌 搭利木津巴士：一程，￥2800，~90min（唔塞車時）",
-              "2. 🚄 搭JR：轉車（關西機場線→大阪站轉→東海道・山陽本線），￥1910，~95min",
-              "3. 🚝 搭JR HARUKA：一程，￥3590，~80min"
-            ],
-            hasSeparator: false,
-            ps: "🚧唔該睇清楚啲線名先好上車🚧"
-          },
-          {
-            title: "🚏 京都去大阪梅田 🚉",
-            map: "大阪梅田站",
-            options: [
-              "1. 🚆 搭JR東海道・山陽本線：一程，￥570，~29min",
-              "2. 🚃 搭阪急京都線：一程，￥410，~43min（河原町→梅田）",
-              "3. 🚋 搭京阪電車→轉地鐵：京阪本線→淀屋橋轉→御堂筋線，￥460，~50min"
-            ],
-            hasSeparator: false,
-            ps: ""
-          },
-          {
-            title: "🚏 京都去大阪難波 🚉",
-            map: "大阪難波站",
-            options: [
-              "1. 🚃 搭阪急京都線→轉地鐵：河原町→梅田轉→御堂筋線，￥610，~55min",
-              "2. 🚋 搭京阪電車→轉地鐵：京阪本線→淀屋橋轉→御堂筋線，￥580，~60min",
-              "3. 🚆 搭JR→轉地鐵：京都站→大阪站轉→御堂筋線，￥800，~50min"
-            ],
-            hasSeparator: false,
-            ps: ""
-          },
-          {
-            title: "🚉 難波去關西機場 🛩️",
-            map: "關西國際機場",
-            options: [
-              "1. 🚝 搭南海Rapi:t特急：一程，￥1450，~38min",
-              "2. 🚃 搭南海本線（急行）：一程，￥930，~45min",
-              "3. 🚌 搭利木津巴士：一程，￥1600，~50min（唔塞車時）"
-            ],
-            hasSeparator: false,
-            ps: ""
-          },
-          {
-            title: "🚉 大阪難波去關西機場（先去臨空城Outlet） 🛍️",
-            map: "臨空城Outlet",
-            optionsPart1: [
-              "1. 🚃 搭南海本線（急行）：難波→臨空城，￥770，~35min",
-              "2. 🚝 搭南海Rapi:t特急：難波→臨空城，￥1450，~30min",
-              "3. 🚌 搭利木津巴士：難波→臨空城Outlet，￥1600，~45min"
-            ],
-            optionsPart2: [
-              "1. 🚃 搭南海本線（普通）：臨空城→關西機場，￥370，~5min",
-              "2. 🚝 搭JR關空快速：臨空城→關西機場，￥400，~5min"
-            ],
-            hasSeparator: true,
-            ps: "P.S. 臨空城站有行李locker，站外邊都有舖頭寄存行李 🧳"
-          }
+          { title: "💺 關西機場去京都 🚏", map: "京都站", options: ["1. 🚌 搭利木津巴士：一程，￥2800，~90min（唔塞車時）","2. 🚄 搭JR：轉車（關西機場線→大阪站轉→東海道・山陽本線），￥1910，~95min","3. 🚝 搭JR HARUKA：一程，￥3590，~80min"], hasSeparator: false, ps: "🚧唔該睇清楚啲線名先好上車🚧" },
+          { title: "🚏 京都去大阪梅田 🚉", map: "大阪梅田站", options: ["1. 🚆 搭JR東海道・山陽本線：一程，￥570，~29min","2. 🚃 搭阪急京都線：一程，￥410，~43min（河原町→梅田）","3. 🚋 搭京阪電車→轉地鐵：京阪本線→淀屋橋轉→御堂筋線，￥460，~50min"], hasSeparator: false, ps: "" },
+          { title: "🚏 京都去大阪難波 🚉", map: "大阪難波站", options: ["1. 🚃 搭阪急京都線→轉地鐵：河原町→梅田轉→御堂筋線，￥610，~55min","2. 🚋 搭京阪電車→轉地鐵：京阪本線→淀屋橋轉→御堂筋線，￥580，~60min","3. 🚆 搭JR→轉地鐵：京都站→大阪站轉→御堂筋線，￥800，~50min"], hasSeparator: false, ps: "" },
+          { title: "🚉 難波去關西機場 🛩️", map: "關西國際機場", options: ["1. 🚝 搭南海Rapi:t特急：一程，￥1450，~38min","2. 🚃 搭南海本線（急行）：一程，￥930，~45min","3. 🚌 搭利木津巴士：一程，￥1600，~50min（唔塞車時）"], hasSeparator: false, ps: "" },
+          { title: "🚉 大阪難波去關西機場（先去臨空城Outlet） 🛍️", map: "臨空城Outlet", optionsPart1: ["1. 🚃 搭南海本線（急行）：難波→臨空城，￥770，~35min","2. 🚝 搭南海Rapi:t特急：難波→臨空城，￥1450，~30min","3. 🚌 搭利木津巴士：難波→臨空城Outlet，￥1600，~45min"], optionsPart2: ["1. 🚃 搭南海本線（普通）：臨空城→關西機場，￥370，~5min","2. 🚝 搭JR關空快速：臨空城→關西機場，￥400，~5min"], hasSeparator: true, ps: "P.S. 臨空城站有行李locker，站外邊都有舖頭寄存行李 🧳" }
         ]
       };
 
-      // 保留原始 code 預設值，防止被覆蓋
       const DEFAULT_TRANSPORT = JSON.parse(JSON.stringify(appData.transportData));
       const DEFAULT_PEOPLE = [...appData.people];
       const DEFAULT_MEMOS = JSON.parse(JSON.stringify(appData.memos));
 
-      // ---------- 雲端同步 ----------
       async function uploadToCloud() {
-        if (isUploading) return;
-        isUploading = true;
+        if (isUploading) return; isUploading = true;
         try {
           appData._lastUpdated = Date.now();
-          const formData = new URLSearchParams();
-          formData.append('action', 'save');
-          formData.append('data', JSON.stringify(appData));
-          const response = await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: formData });
-          const result = await response.json();
-          if (result.success) {
-            appData._lastUpdated = result.serverTimestamp;
-            lastCloudUpdate = result.serverTimestamp;
-            saveToStorage();
-            document.getElementById('saveStatus').innerHTML = '☁️ 已同步';
-            document.getElementById('syncStatus').textContent = '✅ 已同步到雲端';
-            setTimeout(() => { document.getElementById('saveStatus').innerHTML = '💾 已儲存'; }, 2000);
-          } else if (result.message === '版本過舊，請先同步最新資料') {
-            document.getElementById('syncStatus').textContent = '⚠️ 版本衝突，正在同步...';
-            await downloadFromCloud(true);
-          }
-        } catch (e) {
-          console.log('上載失敗:', e);
-          document.getElementById('syncStatus').textContent = '⚠️ 同步失敗，將重試';
-        }
+          const fd = new URLSearchParams(); fd.append('action','save'); fd.append('data',JSON.stringify(appData));
+          const r = await fetch(GOOGLE_SCRIPT_URL,{method:'POST',body:fd}); const j = await r.json();
+          if (j.success) { appData._lastUpdated = j.serverTimestamp; saveToStorage(); document.getElementById('saveStatus').innerHTML='☁️ 已同步'; document.getElementById('syncStatus').textContent='✅ 已同步到雲端'; setTimeout(()=>{document.getElementById('saveStatus').innerHTML='💾 已儲存'},2000); }
+          else if (j.message==='版本過舊，請先同步最新資料') { document.getElementById('syncStatus').textContent='⚠️ 版本衝突，正在同步...'; await downloadFromCloud(true); }
+        } catch(e) { document.getElementById('syncStatus').textContent='⚠️ 同步失敗'; }
         isUploading = false;
       }
 
-      async function downloadFromCloud(showAlert = false) {
+      async function downloadFromCloud(showAlert=false) {
         try {
-          const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=load&t=${Date.now()}`);
-          const data = await response.json();
-          if (data && Object.keys(data).length > 0 && data.tripDays) {
-            const cloudTimestamp = data._serverTimestamp || 0;
-            const localTimestamp = appData._lastUpdated || 0;
-            if (cloudTimestamp > localTimestamp) {
-              const merged = { 
-                ...appData,
-                ...data,
-                settledItems: { ...appData.settledItems, ...(data.settledItems || {}) },
-                itineraryOpen: { ...appData.itineraryOpen, ...(data.itineraryOpen || {}) },
-                memoOpen: { ...appData.memoOpen, ...(data.memoOpen || {}) },
-                _lastUpdated: cloudTimestamp,
-                _serverTimestamp: cloudTimestamp
-              };
-              // 保護唔被雲端舊資料覆蓋
-              merged.transportData = DEFAULT_TRANSPORT;
-              merged.people = DEFAULT_PEOPLE;
-              merged.memos = DEFAULT_MEMOS;
-
-              const oldStr = JSON.stringify({...appData, _lastUpdated: null, _serverTimestamp: null});
-              const newStr = JSON.stringify({...merged, _lastUpdated: null, _serverTimestamp: null});
-              if (oldStr !== newStr) {
-                appData = merged;
-                saveToStorage();
-                renderItinerary();
-                renderExpenses();
-                renderTransport();
-                renderMemos();
-                updateItineraryWeather();
-                document.getElementById('rateInput').value = appData.rate;
-                document.getElementById('saveStatus').innerHTML = '☁️ 已更新';
-                document.getElementById('syncStatus').textContent = '📥 已接收雲端更新';
-                setTimeout(() => { document.getElementById('saveStatus').innerHTML = '💾 已儲存'; }, 2000);
+          const r = await fetch(`${GOOGLE_SCRIPT_URL}?action=load&t=${Date.now()}`); const d = await r.json();
+          if (d && d.tripDays) {
+            const ct = d._serverTimestamp||0, lt = appData._lastUpdated||0;
+            if (ct > lt) {
+              const merged = { ...appData, ...d, settledItems:{...appData.settledItems,...(d.settledItems||{})}, itineraryOpen:{...appData.itineraryOpen,...(d.itineraryOpen||{})}, memoOpen:{...appData.memoOpen,...(d.memoOpen||{})}, _lastUpdated:ct, _serverTimestamp:ct };
+              merged.transportData = DEFAULT_TRANSPORT; merged.people = DEFAULT_PEOPLE; merged.memos = DEFAULT_MEMOS;
+              if (JSON.stringify({...appData,_lastUpdated:null})!==JSON.stringify({...merged,_lastUpdated:null})) {
+                appData = merged; saveToStorage(); renderItinerary(); renderExpenses(); renderTransport(); renderMemos(); updateItineraryWeather();
+                document.getElementById('rateInput').value = appData.rate; document.getElementById('saveStatus').innerHTML='☁️ 已更新'; document.getElementById('syncStatus').textContent='📥 已接收雲端更新';
+                setTimeout(()=>{document.getElementById('saveStatus').innerHTML='💾 已儲存'},2000);
                 if (showAlert) alert('✅ 已從雲端同步最新資料！');
-              } else {
-                document.getElementById('syncStatus').textContent = '⏱️ 資料已是最新';
-              }
-            } else if (cloudTimestamp === localTimestamp) {
-              document.getElementById('syncStatus').textContent = '⏱️ 資料已同步';
+              } else { document.getElementById('syncStatus').textContent='⏱️ 資料已是最新'; }
             }
           }
-        } catch (e) {
-          console.log('下載失敗:', e);
-          document.getElementById('syncStatus').textContent = '⚠️ 無法連接雲端';
-        }
+        } catch(e) { document.getElementById('syncStatus').textContent='⚠️ 無法連接雲端'; }
       }
 
-      function manualSync() {
-        document.getElementById('syncStatus').textContent = '🔄 同步中...';
-        Promise.all([uploadToCloud(), downloadFromCloud(true)]).then(() => {
-          document.getElementById('syncStatus').textContent = '✅ 同步完成';
-        });
-      }
+      function manualSync() { document.getElementById('syncStatus').textContent='🔄 同步中...'; Promise.all([uploadToCloud(),downloadFromCloud(true)]).then(()=>{document.getElementById('syncStatus').textContent='✅ 同步完成'}); }
+      function saveToStorage() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify({...appData,version:8})); } catch(e) {} }
+      function loadFromStorage() { const raw=localStorage.getItem(STORAGE_KEY); if(raw){ try { const p=JSON.parse(raw); appData={...appData,...p}; appData.transportData=DEFAULT_TRANSPORT; appData.people=DEFAULT_PEOPLE; appData.memos=DEFAULT_MEMOS; } catch(e) {} } }
+      function autoSave() { appData._lastUpdated=Date.now(); saveToStorage(); uploadToCloud(); }
 
-      // ---------- 儲存 ----------
-      function saveToStorage() {
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...appData, version: 7 }));
-        } catch (e) {}
-      }
-
-      function loadFromStorage() {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) {
-          try {
-            const parsed = JSON.parse(raw);
-            appData = { ...appData, ...parsed };
-            // 再次保護
-            appData.transportData = DEFAULT_TRANSPORT;
-            appData.people = DEFAULT_PEOPLE;
-            appData.memos = DEFAULT_MEMOS;
-          } catch (e) {}
-        }
-      }
-
-      function autoSave() {
-        appData._lastUpdated = Date.now();
-        saveToStorage();
-        uploadToCloud();
-      }
-
-      // ---------- 天氣 ----------
-      const weatherCache = { data: null, timestamp: null, ttl: 30 * 60 * 1000 };
+      const weatherCache = { data:null, timestamp:null, ttl:30*60*1000 };
       async function fetchWeatherForDays() {
-        if (weatherCache.data && weatherCache.timestamp && (Date.now() - weatherCache.timestamp) < weatherCache.ttl) {
-          return weatherCache.data;
-        }
+        if (weatherCache.data && (Date.now()-weatherCache.timestamp)<weatherCache.ttl) return weatherCache.data;
         try {
-          const [kyotoRes, osakaRes] = await Promise.all([
-            fetch('https://api.open-meteo.com/v1/forecast?latitude=35.0116&longitude=135.7681&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia/Tokyo&forecast_days=7'),
-            fetch('https://api.open-meteo.com/v1/forecast?latitude=34.6937&longitude=135.5022&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia/Tokyo&forecast_days=7')
-          ]);
-          const [kyotoData, osakaData] = await Promise.all([kyotoRes.json(), osakaRes.json()]);
-          const icons = { 0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',51:'🌧️',53:'🌧️',55:'🌧️',61:'🌧️',63:'🌧️',65:'🌧️',71:'🌨️',73:'🌨️',75:'🌨️',80:'🌧️',81:'🌧️',82:'🌧️',95:'⛈️' };
-          const map = {};
-          kyotoData.daily.time.forEach((d,i) => map[d] = { kyoto: { icon: icons[kyotoData.daily.weather_code[i]] || '🌡️', max: Math.round(kyotoData.daily.temperature_2m_max[i]), min: Math.round(kyotoData.daily.temperature_2m_min[i]) } });
-          osakaData.daily.time.forEach((d,i) => { if (map[d]) map[d].osaka = { icon: icons[osakaData.daily.weather_code[i]] || '🌡️', max: Math.round(osakaData.daily.temperature_2m_max[i]), min: Math.round(osakaData.daily.temperature_2m_min[i]) }; });
-          weatherCache.data = map;
-          weatherCache.timestamp = Date.now();
-          return map;
-        } catch (e) { return null; }
+          const [kr, or] = await Promise.all([fetch('https://api.open-meteo.com/v1/forecast?latitude=35.0116&longitude=135.7681&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia/Tokyo&forecast_days=7'),fetch('https://api.open-meteo.com/v1/forecast?latitude=34.6937&longitude=135.5022&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia/Tokyo&forecast_days=7')]);
+          const [kd,od] = await Promise.all([kr.json(),or.json()]);
+          const icons={0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',51:'🌧️',53:'🌧️',55:'🌧️',61:'🌧️',63:'🌧️',65:'🌧️',71:'🌨️',73:'🌨️',75:'🌨️',80:'🌧️',81:'🌧️',82:'🌧️',95:'⛈️'};
+          const map={}; kd.daily.time.forEach((d,i)=>map[d]={kyoto:{icon:icons[kd.daily.weather_code[i]]||'🌡️',max:Math.round(kd.daily.temperature_2m_max[i]),min:Math.round(kd.daily.temperature_2m_min[i])}});
+          od.daily.time.forEach((d,i)=>{if(map[d])map[d].osaka={icon:icons[od.daily.weather_code[i]]||'🌡️',max:Math.round(od.daily.temperature_2m_max[i]),min:Math.round(od.daily.temperature_2m_min[i])}});
+          weatherCache.data=map; weatherCache.timestamp=Date.now(); return map;
+        } catch(e) { return null; }
       }
 
       async function updateItineraryWeather() {
-        const tags = document.querySelectorAll('.weather-tag');
-        tags.forEach(t => t.classList.add('loading'));
-        const data = await fetchWeatherForDays();
-        if (!data) { tags.forEach(t => { t.classList.remove('loading'); t.textContent = '🌡️ 天氣暫無法載入'; }); return; }
-        const mapping = { '2026-08-05':'5/8 (三)','2026-08-06':'6/8 (四)','2026-08-07':'7/8 (五)','2026-08-08':'8/8 (六)','2026-08-09':'9/8 (日)','2026-08-10':'10/8 (一)','2026-08-11':'11/8 (二)' };        tags.forEach(tag => {
-          tag.classList.remove('loading');
-          const card = tag.closest('.day-card');
-          if (!card) return;
-          const header = card.querySelector('.day-title')?.textContent || '';
-          let matched = null;
-          for (const [api, disp] of Object.entries(mapping)) if (header.includes(disp)) { matched = api; break; }
-          if (matched && data[matched]) {
-            const w = matched <= '2026-08-07' ? data[matched].kyoto : data[matched].osaka;
-            tag.textContent = w ? `${w.icon} ${w.min}°-${w.max}°C` : '🌡️ 資料缺失';
-          }
-        });
+        const tags=document.querySelectorAll('.weather-tag'); tags.forEach(t=>t.classList.add('loading'));
+        const data=await fetchWeatherForDays();
+        if(!data){tags.forEach(t=>{t.classList.remove('loading');t.textContent='🌡️ 天氣暫無法載入'});return;}
+        const mapping={'2026-08-05':'8/5 (三)','2026-08-06':'8/6 (四)','2026-08-07':'8/7 (五)','2026-08-08':'8/8 (六)','2026-08-09':'8/9 (日)','2026-08-10':'8/10 (一)','2026-08-11':'8/11 (二)'};
+        tags.forEach(tag=>{tag.classList.remove('loading');const card=tag.closest('.day-card');if(!card)return;const header=card.querySelector('.day-title')?.textContent||'';let matched=null;for(const[api,disp]of Object.entries(mapping))if(header.includes(disp)){matched=api;break;}if(matched&&data[matched]){const w=matched<='2026-08-07'?data[matched].kyoto:data[matched].osaka;tag.textContent=w?`${w.icon} ${w.min}°-${w.max}°C`:'🌡️ 資料缺失';}});
       }
 
-      // ---------- 行程 ----------
       function enableEditMode(idx) {
-        const day = appData.tripDays[idx];
-        const card = document.querySelectorAll('.day-card')[idx];
-        const details = card.querySelector('.trip-details');
-        const old = details.querySelector('.edit-panel');
-        if (old) old.remove();
-        if (!day.times) day.times = day.details.map(() => '');
-        const panel = document.createElement('div');
-        panel.className = 'edit-panel';
-        panel.innerHTML = `
-          <label>📝 行程重點</label>
-          <input type="text" id="editTitle_${idx}" value="${day.title.replace(/"/g, '&quot;')}">
-          <label style="margin-top:10px;">📋 詳細行程項目（時間 + 描述 + 地圖）</label>
-          <div id="editItems_${idx}">
-            ${day.details.map((d,i) => `
-              <div class="edit-item" data-index="${i}">
-                <input type="text" class="time-input" value="${(day.times[i]||'')}" placeholder="時間">
-                <input type="text" class="detail-input" value="${d.replace(/"/g, '&quot;')}" placeholder="行程描述">
-                <input type="text" class="map-input" value="${(day.maps[i]||'')}" placeholder="地圖關鍵字">
-                <button class="remove-item-btn" onclick="window.removeEditItem(${idx},${i})">✕</button>
-              </div>
-            `).join('')}
-          </div>
-          <button class="add-item-btn" onclick="window.addEditItem(${idx})">➕ 增加行程</button>
-          <button class="save-edit-btn" onclick="window.saveEdit(${idx})">💾 儲存修改</button>
-        `;
+        const day=appData.tripDays[idx]; const card=document.querySelectorAll('.day-card')[idx]; const details=card.querySelector('.trip-details');
+        const old=details.querySelector('.edit-panel'); if(old)old.remove(); if(!day.times)day.times=day.details.map(()=>'');
+        const panel=document.createElement('div'); panel.className='edit-panel';
+        panel.innerHTML=`<label>📝 行程重點</label><input type="text" id="editTitle_${idx}" value="${day.title.replace(/"/g,'&quot;')}"><label style="margin-top:10px;">📋 詳細行程項目（時間 + 描述 + 地圖）</label><div id="editItems_${idx}">${day.details.map((d,i)=>`<div class="edit-item" data-index="${i}"><input type="text" class="time-input" value="${(day.times[i]||'')}" placeholder="時間"><input type="text" class="detail-input" value="${d.replace(/"/g,'&quot;')}" placeholder="行程描述"><input type="text" class="map-input" value="${(day.maps[i]||'')}" placeholder="地圖關鍵字"><button class="remove-item-btn" onclick="window.removeEditItem(${idx},${i})">✕</button></div>`).join('')}</div><button class="add-item-btn" onclick="window.addEditItem(${idx})">➕ 增加行程</button><button class="save-edit-btn" onclick="window.saveEdit(${idx})">💾 儲存修改</button>`;
         details.appendChild(panel);
       }
-
-      window.removeEditItem = (dayIdx, itemIdx) => {
-        const c = document.getElementById(`editItems_${dayIdx}`);
-        const items = c.querySelectorAll('.edit-item');
-        if (items.length <= 1) { alert('至少保留一個項目'); return; }
-        items[itemIdx].remove();
-        c.querySelectorAll('.edit-item').forEach((el,i) => el.dataset.index = i);
-      };
-      window.addEditItem = (dayIdx) => {
-        const c = document.getElementById(`editItems_${dayIdx}`);
-        const i = c.querySelectorAll('.edit-item').length;
-        const div = document.createElement('div');
-        div.className = 'edit-item';
-        div.dataset.index = i;
-        div.innerHTML = `<input type="text" class="time-input" placeholder="時間"><input type="text" class="detail-input" placeholder="新行程描述"><input type="text" class="map-input" placeholder="地圖關鍵字"><button class="remove-item-btn" onclick="window.removeEditItem(${dayIdx},${i})">✕</button>`;
-        c.appendChild(div);
-      };
-      window.saveEdit = (dayIdx) => {
-        const title = document.getElementById(`editTitle_${dayIdx}`)?.value.trim();
-        if (title) appData.tripDays[dayIdx].title = title;
-        const items = document.querySelectorAll(`#editItems_${dayIdx} .edit-item`);
-        const times = [], details = [], maps = [];
-        items.forEach(el => {
-          const t = el.querySelector('.time-input')?.value.trim() || '';
-          const d = el.querySelector('.detail-input')?.value.trim();
-          const m = el.querySelector('.map-input')?.value.trim() || '';
-          if (d) { times.push(t); details.push(d); maps.push(m); }
-        });
-        if (details.length === 0) { alert('請至少保留一個行程項目'); return; }
-        appData.tripDays[dayIdx].times = times;
-        appData.tripDays[dayIdx].details = details;
-        appData.tripDays[dayIdx].maps = maps;
-        renderItinerary();
-        autoSave();
-      };
+      window.removeEditItem=(d,i)=>{const c=document.getElementById(`editItems_${d}`);const items=c.querySelectorAll('.edit-item');if(items.length<=1){alert('至少保留一個項目');return;}items[i].remove();c.querySelectorAll('.edit-item').forEach((el,j)=>el.dataset.index=j);};
+      window.addEditItem=(d)=>{const c=document.getElementById(`editItems_${d}`);const i=c.querySelectorAll('.edit-item').length;const div=document.createElement('div');div.className='edit-item';div.dataset.index=i;div.innerHTML=`<input type="text" class="time-input" placeholder="時間"><input type="text" class="detail-input" placeholder="新行程描述"><input type="text" class="map-input" placeholder="地圖關鍵字"><button class="remove-item-btn" onclick="window.removeEditItem(${d},${i})">✕</button>`;c.appendChild(div);};
+      window.saveEdit=(d)=>{const t=document.getElementById(`editTitle_${d}`)?.value.trim();if(t)appData.tripDays[d].title=t;const items=document.querySelectorAll(`#editItems_${d} .edit-item`);const times=[],details=[],maps=[];items.forEach(el=>{const ti=el.querySelector('.time-input')?.value.trim()||'';const de=el.querySelector('.detail-input')?.value.trim();const ma=el.querySelector('.map-input')?.value.trim()||'';if(de){times.push(ti);details.push(de);maps.push(ma);}});if(details.length===0){alert('請至少保留一個行程項目');return;}appData.tripDays[d].times=times;appData.tripDays[d].details=details;appData.tripDays[d].maps=maps;renderItinerary();autoSave();};
 
       function renderItinerary() {
-        const c = document.getElementById('daysContainer');
-        if (!c) return;
-        c.innerHTML = appData.tripDays.map((day, idx) => {
-          const open = appData.itineraryOpen[idx] || false;
-          return `<div class="day-card">
-            <div class="day-header" data-dayidx="${idx}">
-              <span class="day-title">📌 ${day.date} ${day.title}</span>
-              <span class="weather-tag loading">🌡️ 載入中...</span>
-            </div>
-            <div class="trip-details" style="display:${open?'block':'none'};">
-              ${day.details.map((d,i) => {
-                const time = (day.times&&day.times[i])?day.times[i]:'';
-                const mapLink = (day.maps&&day.maps[i])?`<a class="map-link" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(day.maps[i])}" target="_blank">🗺️</a>`:'';
-                return `<div class="timeline-item"><span class="item-time">${time||'全天'}</span><span class="item-desc">${d} ${mapLink}</span></div>`;
-              }).join('')}
-              <div style="margin-top:6px;font-style:italic;color:#c94b6c;font-size:12px;">🚶‍♀️ 交通：請依出口指標移動</div>
-              ${day.ps ? `<div class="transport-ps">${day.ps} ${day.psMap ? `<a class="map-link" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(day.psMap)}" target="_blank">🗺️</a>` : ''}</div>` : ''}
-              <button class="edit-btn" onclick="window.triggerEdit(${idx})">✏️ 修改行程</button>
-            </div>
-          </div>`;
-        }).join('');
-        document.querySelectorAll('.day-header').forEach(h => {
-          h.addEventListener('click', (e) => {
-            const idx = h.dataset.dayidx;
-            appData.itineraryOpen[idx] = !appData.itineraryOpen[idx];
-            renderItinerary();
-            updateItineraryWeather();
-            autoSave();
-          });
-        });
-        updateItineraryWeather();
-      }
-      window.triggerEdit = (idx) => enableEditMode(idx);
-
-      // ---------- 交通 ----------
-      function renderTransport() {
-        const c = document.getElementById('transportContainer');
-        if (!c) return;
-        c.innerHTML = appData.transportData.map(t => `
-          <div class="day-card">
-            <div class="day-title" style="margin-bottom:10px;">
-              ${t.title}
-              ${t.map ? `<a class="map-link" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(t.map)}" target="_blank">🗺️</a>` : ''}
-            </div>
-            ${t.hasSeparator ? 
-              (t.optionsPart1||[]).map(o=>`<div class="transport-option">${o}</div>`).join('') + 
-              '<div class="transport-separator">👜🛒👜🛒👜🛒👜🛒👜🛒👜🛒</div>' + 
-              (t.optionsPart2||[]).map(o=>`<div class="transport-option">${o}</div>`).join('')
-              : t.options.map(o=>`<div class="transport-option">${o}</div>`).join('')
-            }
-            ${t.ps?`<div class="transport-ps">${t.ps}</div>`:''}
-          </div>
-        `).join('');
-      }
-
-      // ---------- 備忘 ----------
-      function renderMemos() {
-        const c = document.getElementById('memoContainer');
-        if (!c) return;
-        const memos = appData.memos || DEFAULT_MEMOS;
-        c.innerHTML = Object.entries(memos).map(([key, memo]) => {
-          const open = (appData.memoOpen && appData.memoOpen[key]) || false;
-          return `<div class="day-card">
-            <div class="day-header" data-memokey="${key}">
-              <span class="day-title">📝 ${memo.title || key}</span>
-            </div>
-            <div class="trip-details" style="display:${open?'block':'none'};">
-              <div style="white-space:pre-wrap;font-size:13px;color:#4a2c38;">${memo.content || '（未有內容）'}</div>
-              <button class="edit-btn" onclick="window.editMemo('${key}')">✏️ 編輯備忘</button>
-            </div>
-          </div>`;
-        }).join('');
-        document.querySelectorAll('#memoContainer .day-header').forEach(h => {
-          h.addEventListener('click', (e) => {
-            const key = h.dataset.memokey;
-            if (!appData.memoOpen) appData.memoOpen = {};
-            appData.memoOpen[key] = !appData.memoOpen[key];
-            renderMemos();
-            autoSave();
-          });
-        });
-      }
-
-      window.editMemo = (key) => {
-        const memos = appData.memos || DEFAULT_MEMOS;
-        const memo = memos[key] || { title: key, content: '' };
-        const newContent = prompt(`編輯備忘：${memo.title}`, memo.content || '');
-        if (newContent !== null) {
-          memo.content = newContent;
-          memos[key] = memo;
-          appData.memos = memos;
-          renderMemos();
-          autoSave();
-        }
-      };
-
-      // ---------- 記帳 ----------
-      function updatePayerOptions() {
-        const count = parseInt(document.getElementById('peopleCount').value) || 2;
-        const sel = document.getElementById('payerSelect');
-        const ppl = appData.people.slice(0, count);
-        sel.innerHTML = ppl.map(p => `<option value="${p}">${p}</option>`).join('');
-        renderCustomInputs();
-      }
-      function renderCustomInputs() {
-        const mode = document.getElementById('splitMode').value;
-        const count = parseInt(document.getElementById('peopleCount').value) || 2;
-        const container = document.getElementById('customAmounts');
-        if (mode === 'custom') {
-          container.style.display = 'block';
-          container.innerHTML = appData.people.slice(0,count).map(p => `
-            <div class="flex-row" style="margin-bottom:4px;"><span style="width:30px;">${p}</span><input type="number" class="custom-amount" data-person="${p}" placeholder="金額" step="1" style="flex:1;"></div>
-          `).join('');
-        } else { container.style.display = 'none'; }
-      }
-      function addExpense() {
-        const name = document.getElementById('expenseName').value.trim();
-        const total = parseFloat(document.getElementById('totalAmount').value);
-        const currency = document.getElementById('currencySelect').value;
-        const peopleCount = parseInt(document.getElementById('peopleCount').value);
-        const payer = document.getElementById('payerSelect').value;
-        const mode = document.getElementById('splitMode').value;
-        if (!name || isNaN(total) || total <= 0) return alert('請填寫名稱與金額');
-        let splits = {};
-        const ppl = appData.people.slice(0, peopleCount);
-        if (mode === 'equal') {
-          const per = Math.floor(total / peopleCount);
-          ppl.forEach(p => splits[p] = per);
-        } else {
-          document.querySelectorAll('.custom-amount').forEach(inp => {
-            splits[inp.dataset.person] = parseFloat(inp.value) || 0;
-          });
-        }
-        appData.expenses.push({ id: Date.now(), name, total, currency, payer, mode, splits, peopleCount, timestamp: new Date().toISOString() });
-        renderExpenses();
-        autoSave();
-        document.getElementById('expenseName').value = '';
-        document.getElementById('totalAmount').value = '';
-      }
-      function toggleSettle(id) { appData.settledItems[id] = !appData.settledItems[id]; renderExpenses(); autoSave(); }
-      function deleteExpense(id) { appData.expenses = appData.expenses.filter(e=>e.id!==id); delete appData.settledItems[id]; renderExpenses(); autoSave(); }
-      function renderExpenses() {
-        const list = document.getElementById('expenseList');
-        if (!list) return;
-        list.innerHTML = appData.expenses.map(exp => `
-          <div class="expense-card ${appData.settledItems[exp.id]?'settled-line':''}">
-            <div><strong>${exp.name}</strong> (${exp.currency}) 總額: ${exp.total}</div>
-            <div>👤 付款: ${exp.payer} | ${exp.mode==='equal'?'人均':'分開付'}</div>
-            <div class="flex-row" style="justify-content:space-between;">
-              <button onclick="window.toggleSettle(${exp.id})">${appData.settledItems[exp.id]?'✅已結清':'⬜ 未結'}</button>
-              <button onclick="window.deleteExpense(${exp.id})" style="background:#e0b0b0;">🗑️</button>
-            </div>
-          </div>
-        `).join('');
-      }
-      function calculateFinal() {
-        const rate = appData.rate;
-        const bal = {};
-        appData.people.forEach(p => bal[p] = 0);
-        appData.expenses.forEach(exp => {
-          if (appData.settledItems[exp.id]) return;
-          bal[exp.payer] = (bal[exp.payer]||0) + exp.total;
-          Object.entries(exp.splits).forEach(([p,amt]) => bal[p] = (bal[p]||0) - amt);
-        });
-        return bal;
-      }
-      function showFinalSummary() {
-        const bal = calculateFinal();
-        const rate = appData.rate;
-        const div = document.getElementById('finalSummary');
-        if (!div) return;
-        let html = '<div><strong>🧾 最終結算 (未結清項目)</strong></div>';
-        const entries = Object.entries(bal);
-        if (!entries.length) html += '<div>無待結算項目</div>';
-        else entries.forEach(([p,amt]) => {
-          const jpy = Math.round(amt);
-          html += `<div>${p}: ${amt>=0?'收':'付'} ${Math.abs(jpy)}日圓 (約HK$${Math.abs(jpy*rate).toFixed(2)})</div>`;
-        });
-        html += '<hr><div>💞 付款建議：</div>';
-        const ppl = appData.people;
-        for (let i=0;i<ppl.length;i++) {
-          for (let j=i+1;j<ppl.length;j++) {
-            const a=ppl[i],b=ppl[j];
-            const diff = (bal[a]||0)-(bal[b]||0);
-            if (Math.abs(diff)>0.5) {
-              const payer = diff>0?b:a, receiver = diff>0?a:b;
-              const amt = Math.abs(diff);
-              html += `<div>💖 ${payer} 應付 ${receiver} ${Math.round(amt)}日圓 (HK$${(amt*rate).toFixed(2)})</div>`;
-            }
-          }
-        }
-        div.innerHTML = html;
-      }
-      function convertCurrency() {
-        const rate = parseFloat(document.getElementById('rateInput').value)||0.052;
-        appData.rate = rate;
-        const jpy = parseFloat(document.getElementById('jpyInput').value);
-        const hkd = parseFloat(document.getElementById('hkdInput').value);
-        if (!isNaN(jpy)) document.getElementById('hkdInput').value = (jpy*rate).toFixed(2);
-        else if (!isNaN(hkd)) document.getElementById('jpyInput').value = (hkd/rate).toFixed(0);
-        autoSave();
-      }
-
-      // ---------- 啟動 ----------
-      window.onload = () => {
-        loadFromStorage();
-        downloadFromCloud(false).then(() => {
-          renderItinerary();
-          renderTransport();
-          renderMemos();
-          updatePayerOptions();
-          renderExpenses();
-          document.getElementById('rateInput').value = appData.rate;
-        });
-        document.getElementById('manualSyncBtn').addEventListener('click', manualSync);
-        document.querySelectorAll('.nav-btn').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.getElementById(btn.dataset.section).classList.add('active');
-          });
-        });
-        document.getElementById('peopleCount').addEventListener('change', updatePayerOptions);
-        document.getElementById('splitMode').addEventListener('change', renderCustomInputs);
-        document.getElementById('addExpenseBtn').addEventListener('click', addExpense);
-        document.getElementById('settleAllBtn').addEventListener('click', showFinalSummary);
-        document.getElementById('convertBtn').addEventListener('click', convertCurrency);
-        document.getElementById('rateInput').addEventListener('change', e => { appData.rate = parseFloat(e.target.value); autoSave(); });
-        window.toggleSettle = toggleSettle;
-        window.deleteExpense = deleteExpense;
-        document.querySelectorAll('input, select').forEach(el => el.addEventListener('change', autoSave));
-        setInterval(() => downloadFromCloud(false), SYNC_INTERVAL);
-        window.addEventListener('beforeunload', () => uploadToCloud());
-      };
-    })();
-  </script>
-</body>
-</html>
+        const c=document.getElementById('daysContainer'); if(!c)return;
+        c.innerHTML=appData.tripDays.map((day,idx)=>{const open=appData.itineraryOpen[idx]||false;return`<div class="day-card"><div class="day-header" data-dayidx="${idx}"><span class="day-title">📌 ${day.date} ${day.title}</
