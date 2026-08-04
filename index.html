@@ -625,6 +625,7 @@
         transportData: [
           {
             title: "💺 關西機場去京都 🚉",
+            map: "京都站",
             options: [
               "1. 🚌 搭利木津巴士：一程，￥2800，~90min（唔塞車時）",
               "2. 🚄 搭JR：轉車（關西機場線→大阪站轉→東海道・山陽本線），￥1910，~95min",
@@ -635,6 +636,7 @@
           },
           {
             title: "💺 京都去大阪梅田 🚉",
+            map: "大阪梅田站",
             options: [
               "1. 🚆 搭JR東海道・山陽本線：一程，￥570，~29min",
               "2. 🚃 搭阪急京都線：一程，￥410，~43min（河原町→梅田）",
@@ -645,6 +647,7 @@
           },
           {
             title: "💺 京都去大阪難波 🚉",
+            map: "大阪難波站",
             options: [
               "1. 🚃 搭阪急京都線→轉地鐵：河原町→梅田轉→御堂筋線，￥610，~55min",
               "2. 🚋 搭京阪電車→轉地鐵：京阪本線→淀屋橋轉→御堂筋線，￥580，~60min",
@@ -655,6 +658,7 @@
           },
           {
             title: "💺 大阪難波去關西機場 🚉",
+            map: "關西國際機場",
             options: [
               "1. 🚝 搭南海Rapi:t特急：一程，￥1450，~38min",
               "2. 🚃 搭南海本線（急行）：一程，￥930，~45min",
@@ -665,6 +669,7 @@
           },
           {
             title: "💺 大阪難波去關西機場（先去臨空城Outlet） 🛍️",
+            map: "臨空城Outlet",
             optionsPart1: [
               "1. 🚃 搭南海本線（急行）：難波→臨空城，￥770，~35min",
               "2. 🚝 搭南海Rapi:t特急：難波→臨空城，￥1450，~30min",
@@ -1057,7 +1062,10 @@
         if (!container) return;
         container.innerHTML = appData.transportData.map((t, idx) => `
           <div class="day-card">
-            <div class="day-title" style="margin-bottom:10px;">${t.title}</div>
+            <div class="day-title" style="margin-bottom:10px;">
+              ${t.title}
+              ${t.map ? `<a class="map-link" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(t.map)}" target="_blank">🗺️</a>` : ''}
+            </div>
             ${t.hasSeparator ? 
               (t.optionsPart1 || []).map(o => `<div class="transport-option">${o}</div>`).join('') + 
               '<div class="transport-separator">👜🛒👜🛒👜🛒👜🛒👜🛒👜🛒</div>' + 
