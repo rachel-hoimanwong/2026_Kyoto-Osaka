@@ -833,8 +833,7 @@
         tags.forEach(t => t.classList.add('loading'));
         const data = await fetchWeatherForDays();
         if (!data) { tags.forEach(t => { t.classList.remove('loading'); t.textContent = '🌡️ 天氣暫無法載入'; }); return; }
-        const mapping = { '2026-08-05':'8/5 (三)','2026-08-06':'8/6 (四)','2026-08-07':'8/7 (五)','2026-08-08':'8/8 (六)','2026-08-09':'8/9 (日)','2026-08-10':'8/10 (一)','2026-08-11':'8/11 (二)' };
-        tags.forEach(tag => {
+        const mapping = { '2026-08-05':'5/8 (三)','2026-08-06':'6/8 (四)','2026-08-07':'7/8 (五)','2026-08-08':'8/8 (六)','2026-08-09':'9/8 (日)','2026-08-10':'10/8 (一)','2026-08-11':'11/8 (二)' };        tags.forEach(tag => {
           tag.classList.remove('loading');
           const card = tag.closest('.day-card');
           if (!card) return;
