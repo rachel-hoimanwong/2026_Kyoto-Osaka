@@ -456,18 +456,15 @@
       <button class="nav-btn" data-section="memo">📝 備忘</button>
     </div>
 
-    <!-- 同步控制按鈕 -->
     <div class="sync-controls">
       <button class="sync-btn" id="manualSyncBtn">🔄 手動同步</button>
       <span style="color:#b3546b;" id="syncStatus">⏱️ 每8秒自動同步</span>
     </div>
 
-    <!-- 行程區 -->
     <div id="itinerary" class="section active">
       <div id="daysContainer"></div>
     </div>
 
-    <!-- 記帳區 -->
     <div id="expenses" class="section">
       <div style="margin-bottom:16px; display:flex; gap:8px;">
         <input type="text" id="expenseName" placeholder="項目名稱 (例: 午餐)" style="flex:2;">
@@ -486,7 +483,6 @@
       <div id="finalSummary" style="margin-top:10px; background:#fff0f3; border-radius:20px; padding:12px;"></div>
     </div>
 
-    <!-- 匯率計算器 -->
     <div id="calculator" class="section">
       <div style="background: #fff0f5; border-radius: 24px; padding: 18px;">
         <label>🌸 匯率設定 (每1日圓兌港幣)</label>
@@ -500,12 +496,10 @@
       </div>
     </div>
 
-    <!-- 交通區 -->
     <div id="transport" class="section">
       <div id="transportContainer"></div>
     </div>
 
-    <!-- 備忘區 -->
     <div id="memo" class="section">
       <div id="memoContainer"></div>
     </div>
@@ -517,16 +511,18 @@
 
   <script>
     (function () {
-      // ---------- 🔴 呢度要改！貼上你嘅 Google Apps Script URL ----------
+      // ---------- 🔴 貼上你嘅 Google Apps Script URL ----------
       const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwDr4_lFr3tht9Za1gxqkeBkZipvlULcDxLbFjzwAc4mGMuzOLX9HeD_3DKWQhJKuc/exec';
-      // ----------------------------------------------------------------
+      // --------------------------------------------------------
       
-      const SYNC_INTERVAL = 8000; // 每8秒自動同步一次
+      const SYNC_INTERVAL = 8000;
       let isUploading = false;
       let lastCloudUpdate = null;
 
-      // ---------- 儲存系統 ----------
-      const STORAGE_KEY = 'pinkTripKyotoOsaka_v6';
+      // 全新儲存 key，強制唔用舊 cache
+      const STORAGE_KEY = 'pinkTripKyotoOsaka_v7';
+
+      // 預設資料（已修正所有 bug）
       let appData = {
         itineraryOpen: {},
         expenses: [],
@@ -621,7 +617,6 @@
             maps: ["黑門市場","Namba+Parks","關西國際機場"] 
           }
         ],
-        // 交通資料
         transportData: [
           {
             title: "💺 關西機場去京都 🚉",
@@ -685,39 +680,35 @@
         ]
       };
 
-      // ---------- 雲端同步功能 ----------
+      // 保留原始 code 預設值，防止被覆蓋
+      const DEFAULT_TRANSPORT = JSON.parse(JSON.stringify(appData.transportData));
+      const DEFAULT_PEOPLE = [...appData.people];
+      const DEFAULT_MEMOS = JSON.parse(JSON.stringify(appData.memos));
+
+      // ---------- 雲端同步 ----------
       async function uploadToCloud() {
         if (isUploading) return;
         isUploading = true;
         try {
           appData._lastUpdated = Date.now();
-          
           const formData = new URLSearchParams();
           formData.append('action', 'save');
           formData.append('data', JSON.stringify(appData));
-          
-          const response = await fetch(GOOGLE_SCRIPT_URL, {
-            method: 'POST',
-            body: formData
-          });
-          
+          const response = await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: formData });
           const result = await response.json();
-          
           if (result.success) {
             appData._lastUpdated = result.serverTimestamp;
             lastCloudUpdate = result.serverTimestamp;
             saveToStorage();
             document.getElementById('saveStatus').innerHTML = '☁️ 已同步';
             document.getElementById('syncStatus').textContent = '✅ 已同步到雲端';
-            setTimeout(() => {
-              document.getElementById('saveStatus').innerHTML = '💾 已儲存';
-            }, 2000);
+            setTimeout(() => { document.getElementById('saveStatus').innerHTML = '💾 已儲存'; }, 2000);
           } else if (result.message === '版本過舊，請先同步最新資料') {
             document.getElementById('syncStatus').textContent = '⚠️ 版本衝突，正在同步...';
             await downloadFromCloud(true);
           }
         } catch (e) {
-          console.log('☁️ 上載失敗:', e);
+          console.log('上載失敗:', e);
           document.getElementById('syncStatus').textContent = '⚠️ 同步失敗，將重試';
         }
         isUploading = false;
@@ -727,26 +718,27 @@
         try {
           const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=load&t=${Date.now()}`);
           const data = await response.json();
-          
           if (data && Object.keys(data).length > 0 && data.tripDays) {
             const cloudTimestamp = data._serverTimestamp || 0;
             const localTimestamp = appData._lastUpdated || 0;
-            
             if (cloudTimestamp > localTimestamp) {
               const merged = { 
                 ...appData,
-                ...data, 
+                ...data,
                 settledItems: { ...appData.settledItems, ...(data.settledItems || {}) },
                 itineraryOpen: { ...appData.itineraryOpen, ...(data.itineraryOpen || {}) },
                 memoOpen: { ...appData.memoOpen, ...(data.memoOpen || {}) },
                 _lastUpdated: cloudTimestamp,
                 _serverTimestamp: cloudTimestamp
               };
-              
-              const oldDataStr = JSON.stringify({...appData, _lastUpdated: null, _serverTimestamp: null});
-              const newDataStr = JSON.stringify({...merged, _lastUpdated: null, _serverTimestamp: null});
-              
-              if (oldDataStr !== newDataStr) {
+              // 保護唔被雲端舊資料覆蓋
+              merged.transportData = DEFAULT_TRANSPORT;
+              merged.people = DEFAULT_PEOPLE;
+              merged.memos = DEFAULT_MEMOS;
+
+              const oldStr = JSON.stringify({...appData, _lastUpdated: null, _serverTimestamp: null});
+              const newStr = JSON.stringify({...merged, _lastUpdated: null, _serverTimestamp: null});
+              if (oldStr !== newStr) {
                 appData = merged;
                 saveToStorage();
                 renderItinerary();
@@ -757,9 +749,7 @@
                 document.getElementById('rateInput').value = appData.rate;
                 document.getElementById('saveStatus').innerHTML = '☁️ 已更新';
                 document.getElementById('syncStatus').textContent = '📥 已接收雲端更新';
-                setTimeout(() => {
-                  document.getElementById('saveStatus').innerHTML = '💾 已儲存';
-                }, 2000);
+                setTimeout(() => { document.getElementById('saveStatus').innerHTML = '💾 已儲存'; }, 2000);
                 if (showAlert) alert('✅ 已從雲端同步最新資料！');
               } else {
                 document.getElementById('syncStatus').textContent = '⏱️ 資料已是最新';
@@ -769,7 +759,7 @@
             }
           }
         } catch (e) {
-          console.log('☁️ 下載失敗:', e);
+          console.log('下載失敗:', e);
           document.getElementById('syncStatus').textContent = '⚠️ 無法連接雲端';
         }
       }
@@ -781,14 +771,11 @@
         });
       }
 
-      // ---------- 儲存系統 ----------
+      // ---------- 儲存 ----------
       function saveToStorage() {
         try {
-          const payload = { ...appData, version: 6 };
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-        } catch (e) {
-          console.log('本地儲存失敗');
-        }
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...appData, version: 7 }));
+        } catch (e) {}
       }
 
       function loadFromStorage() {
@@ -797,310 +784,202 @@
           try {
             const parsed = JSON.parse(raw);
             appData = { ...appData, ...parsed };
-          } catch (e) { }
+            // 再次保護
+            appData.transportData = DEFAULT_TRANSPORT;
+            appData.people = DEFAULT_PEOPLE;
+            appData.memos = DEFAULT_MEMOS;
+          } catch (e) {}
         }
       }
 
       function autoSave() {
         appData._lastUpdated = Date.now();
-        saveToStorage(); 
+        saveToStorage();
         uploadToCloud();
       }
 
-      // ---------- 天氣功能 (Open-Meteo) ----------
-      const weatherCache = {
-        data: null,
-        timestamp: null,
-        ttl: 30 * 60 * 1000
-      };
-
+      // ---------- 天氣 ----------
+      const weatherCache = { data: null, timestamp: null, ttl: 30 * 60 * 1000 };
       async function fetchWeatherForDays() {
         if (weatherCache.data && weatherCache.timestamp && (Date.now() - weatherCache.timestamp) < weatherCache.ttl) {
           return weatherCache.data;
         }
-
         try {
           const [kyotoRes, osakaRes] = await Promise.all([
             fetch('https://api.open-meteo.com/v1/forecast?latitude=35.0116&longitude=135.7681&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia/Tokyo&forecast_days=7'),
             fetch('https://api.open-meteo.com/v1/forecast?latitude=34.6937&longitude=135.5022&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia/Tokyo&forecast_days=7')
           ]);
-
           const [kyotoData, osakaData] = await Promise.all([kyotoRes.json(), osakaRes.json()]);
-
-          const weatherIcons = {
-            0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️',
-            45: '🌫️', 48: '🌫️', 51: '🌧️', 53: '🌧️', 55: '🌧️',
-            61: '🌧️', 63: '🌧️', 65: '🌧️', 71: '🌨️', 73: '🌨️',
-            75: '🌨️', 80: '🌧️', 81: '🌧️', 82: '🌧️', 95: '⛈️'
-          };
-
-          const weatherMap = {};
-          kyotoData.daily.time.forEach((date, i) => {
-            weatherMap[date] = {
-              kyoto: {
-                icon: weatherIcons[kyotoData.daily.weather_code[i]] || '🌡️',
-                max: Math.round(kyotoData.daily.temperature_2m_max[i]),
-                min: Math.round(kyotoData.daily.temperature_2m_min[i])
-              }
-            };
-          });
-
-          osakaData.daily.time.forEach((date, i) => {
-            if (weatherMap[date]) {
-              weatherMap[date].osaka = {
-                icon: weatherIcons[osakaData.daily.weather_code[i]] || '🌡️',
-                max: Math.round(osakaData.daily.temperature_2m_max[i]),
-                min: Math.round(osakaData.daily.temperature_2m_min[i])
-              };
-            }
-          });
-
-          weatherCache.data = weatherMap;
+          const icons = { 0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',51:'🌧️',53:'🌧️',55:'🌧️',61:'🌧️',63:'🌧️',65:'🌧️',71:'🌨️',73:'🌨️',75:'🌨️',80:'🌧️',81:'🌧️',82:'🌧️',95:'⛈️' };
+          const map = {};
+          kyotoData.daily.time.forEach((d,i) => map[d] = { kyoto: { icon: icons[kyotoData.daily.weather_code[i]] || '🌡️', max: Math.round(kyotoData.daily.temperature_2m_max[i]), min: Math.round(kyotoData.daily.temperature_2m_min[i]) } });
+          osakaData.daily.time.forEach((d,i) => { if (map[d]) map[d].osaka = { icon: icons[osakaData.daily.weather_code[i]] || '🌡️', max: Math.round(osakaData.daily.temperature_2m_max[i]), min: Math.round(osakaData.daily.temperature_2m_min[i]) }; });
+          weatherCache.data = map;
           weatherCache.timestamp = Date.now();
-          return weatherMap;
-        } catch (error) {
-          console.error('天氣獲取失敗:', error);
-          return null;
-        }
+          return map;
+        } catch (e) { return null; }
       }
 
       async function updateItineraryWeather() {
-        const weatherTags = document.querySelectorAll('.weather-tag');
-        weatherTags.forEach(tag => tag.classList.add('loading'));
-
-        const weatherData = await fetchWeatherForDays();
-        if (!weatherData) {
-          weatherTags.forEach(tag => {
-            tag.classList.remove('loading');
-            tag.textContent = '🌡️ 天氣暫無法載入';
-          });
-          return;
-        }
-
-        const dateMapping = {
-          '2026-08-05': '8/5 (三)', '2026-08-06': '8/6 (四)',
-          '2026-08-07': '8/7 (五)', '2026-08-08': '8/8 (六)',
-          '2026-08-09': '8/9 (日)', '2026-08-10': '8/10 (一)',
-          '2026-08-11': '8/11 (二)'
-        };
-
-        weatherTags.forEach(tag => {
+        const tags = document.querySelectorAll('.weather-tag');
+        tags.forEach(t => t.classList.add('loading'));
+        const data = await fetchWeatherForDays();
+        if (!data) { tags.forEach(t => { t.classList.remove('loading'); t.textContent = '🌡️ 天氣暫無法載入'; }); return; }
+        const mapping = { '2026-08-05':'8/5 (三)','2026-08-06':'8/6 (四)','2026-08-07':'8/7 (五)','2026-08-08':'8/8 (六)','2026-08-09':'8/9 (日)','2026-08-10':'8/10 (一)','2026-08-11':'8/11 (二)' };
+        tags.forEach(tag => {
           tag.classList.remove('loading');
-          const parentCard = tag.closest('.day-card');
-          if (!parentCard) return;
-          const headerText = parentCard.querySelector('.day-title')?.textContent || '';
-          let matchedDate = null;
-          for (const [apiDate, displayDate] of Object.entries(dateMapping)) {
-            if (headerText.includes(displayDate)) {
-              matchedDate = apiDate;
-              break;
-            }
-          }
-          if (matchedDate && weatherData[matchedDate]) {
-            const weather = weatherData[matchedDate];
-            const locationWeather = matchedDate <= '2026-08-07' ? weather.kyoto : weather.osaka;
-            if (locationWeather) {
-              tag.textContent = `${locationWeather.icon} ${locationWeather.min}°-${locationWeather.max}°C`;
-            } else {
-              tag.textContent = '🌡️ 資料缺失';
-            }
+          const card = tag.closest('.day-card');
+          if (!card) return;
+          const header = card.querySelector('.day-title')?.textContent || '';
+          let matched = null;
+          for (const [api, disp] of Object.entries(mapping)) if (header.includes(disp)) { matched = api; break; }
+          if (matched && data[matched]) {
+            const w = matched <= '2026-08-07' ? data[matched].kyoto : data[matched].osaka;
+            tag.textContent = w ? `${w.icon} ${w.min}°-${w.max}°C` : '🌡️ 資料缺失';
           }
         });
       }
 
-      // ---------- 行程修改功能 ----------
-      function enableEditMode(dayIndex) {
-        const day = appData.tripDays[dayIndex];
-        const card = document.querySelectorAll('.day-card')[dayIndex];
-        const detailsDiv = card.querySelector('.trip-details');
-        
-        const oldPanel = detailsDiv.querySelector('.edit-panel');
-        if (oldPanel) oldPanel.remove();
-
+      // ---------- 行程 ----------
+      function enableEditMode(idx) {
+        const day = appData.tripDays[idx];
+        const card = document.querySelectorAll('.day-card')[idx];
+        const details = card.querySelector('.trip-details');
+        const old = details.querySelector('.edit-panel');
+        if (old) old.remove();
         if (!day.times) day.times = day.details.map(() => '');
-
-        const editPanel = document.createElement('div');
-        editPanel.className = 'edit-panel';
-        editPanel.innerHTML = `
+        const panel = document.createElement('div');
+        panel.className = 'edit-panel';
+        panel.innerHTML = `
           <label>📝 行程重點</label>
-          <input type="text" id="editTitle_${dayIndex}" value="${day.title.replace(/"/g, '&quot;')}" placeholder="例：關西機場→宇治→河原町">
-          
+          <input type="text" id="editTitle_${idx}" value="${day.title.replace(/"/g, '&quot;')}">
           <label style="margin-top:10px;">📋 詳細行程項目（時間 + 描述 + 地圖）</label>
-          <div id="editItems_${dayIndex}">
-            ${day.details.map((detail, i) => `
+          <div id="editItems_${idx}">
+            ${day.details.map((d,i) => `
               <div class="edit-item" data-index="${i}">
-                <input type="text" class="time-input" value="${(day.times && day.times[i]) ? day.times[i] : ''}" placeholder="時間">
-                <input type="text" class="detail-input" value="${detail.replace(/"/g, '&quot;')}" placeholder="行程描述">
-                <input type="text" class="map-input" value="${(day.maps && day.maps[i]) ? day.maps[i] : ''}" placeholder="地圖關鍵字">
-                <button class="remove-item-btn" onclick="window.removeEditItem(${dayIndex}, ${i})">✕</button>
+                <input type="text" class="time-input" value="${(day.times[i]||'')}" placeholder="時間">
+                <input type="text" class="detail-input" value="${d.replace(/"/g, '&quot;')}" placeholder="行程描述">
+                <input type="text" class="map-input" value="${(day.maps[i]||'')}" placeholder="地圖關鍵字">
+                <button class="remove-item-btn" onclick="window.removeEditItem(${idx},${i})">✕</button>
               </div>
             `).join('')}
           </div>
-          <button class="add-item-btn" onclick="window.addEditItem(${dayIndex})">➕ 增加行程</button>
-          <button class="save-edit-btn" onclick="window.saveEdit(${dayIndex})">💾 儲存修改</button>
+          <button class="add-item-btn" onclick="window.addEditItem(${idx})">➕ 增加行程</button>
+          <button class="save-edit-btn" onclick="window.saveEdit(${idx})">💾 儲存修改</button>
         `;
-
-        detailsDiv.appendChild(editPanel);
+        details.appendChild(panel);
       }
 
-      window.removeEditItem = function(dayIndex, itemIndex) {
-        const container = document.getElementById(`editItems_${dayIndex}`);
-        const items = container.querySelectorAll('.edit-item');
-        if (items.length <= 1) {
-          alert('至少需要保留一個行程項目');
-          return;
-        }
-        items[itemIndex].remove();
-        const remaining = container.querySelectorAll('.edit-item');
-        remaining.forEach((item, i) => item.dataset.index = i);
+      window.removeEditItem = (dayIdx, itemIdx) => {
+        const c = document.getElementById(`editItems_${dayIdx}`);
+        const items = c.querySelectorAll('.edit-item');
+        if (items.length <= 1) { alert('至少保留一個項目'); return; }
+        items[itemIdx].remove();
+        c.querySelectorAll('.edit-item').forEach((el,i) => el.dataset.index = i);
       };
-
-      window.addEditItem = function(dayIndex) {
-        const container = document.getElementById(`editItems_${dayIndex}`);
-        const newIndex = container.querySelectorAll('.edit-item').length;
-        const newItem = document.createElement('div');
-        newItem.className = 'edit-item';
-        newItem.dataset.index = newIndex;
-        newItem.innerHTML = `
-          <input type="text" class="time-input" placeholder="時間">
-          <input type="text" class="detail-input" placeholder="新行程描述">
-          <input type="text" class="map-input" placeholder="地圖關鍵字">
-          <button class="remove-item-btn" onclick="window.removeEditItem(${dayIndex}, ${newIndex})">✕</button>
-        `;
-        container.appendChild(newItem);
+      window.addEditItem = (dayIdx) => {
+        const c = document.getElementById(`editItems_${dayIdx}`);
+        const i = c.querySelectorAll('.edit-item').length;
+        const div = document.createElement('div');
+        div.className = 'edit-item';
+        div.dataset.index = i;
+        div.innerHTML = `<input type="text" class="time-input" placeholder="時間"><input type="text" class="detail-input" placeholder="新行程描述"><input type="text" class="map-input" placeholder="地圖關鍵字"><button class="remove-item-btn" onclick="window.removeEditItem(${dayIdx},${i})">✕</button>`;
+        c.appendChild(div);
       };
-
-      window.saveEdit = function(dayIndex) {
-        const titleInput = document.getElementById(`editTitle_${dayIndex}`);
-        if (titleInput && titleInput.value.trim()) {
-          appData.tripDays[dayIndex].title = titleInput.value.trim();
-        }
-
-        const container = document.getElementById(`editItems_${dayIndex}`);
-        const items = container.querySelectorAll('.edit-item');
-        const newTimes = [];
-        const newDetails = [];
-        const newMaps = [];
-        
-        items.forEach(item => {
-          const timeInput = item.querySelector('.time-input');
-          const detailInput = item.querySelector('.detail-input');
-          const mapInput = item.querySelector('.map-input');
-          if (detailInput.value.trim()) {
-            newTimes.push(timeInput.value.trim() || '');
-            newDetails.push(detailInput.value.trim());
-            newMaps.push(mapInput.value.trim() || '');
-          }
+      window.saveEdit = (dayIdx) => {
+        const title = document.getElementById(`editTitle_${dayIdx}`)?.value.trim();
+        if (title) appData.tripDays[dayIdx].title = title;
+        const items = document.querySelectorAll(`#editItems_${dayIdx} .edit-item`);
+        const times = [], details = [], maps = [];
+        items.forEach(el => {
+          const t = el.querySelector('.time-input')?.value.trim() || '';
+          const d = el.querySelector('.detail-input')?.value.trim();
+          const m = el.querySelector('.map-input')?.value.trim() || '';
+          if (d) { times.push(t); details.push(d); maps.push(m); }
         });
-
-        if (newDetails.length === 0) {
-          alert('請至少保留一個行程項目');
-          return;
-        }
-
-        appData.tripDays[dayIndex].times = newTimes;
-        appData.tripDays[dayIndex].details = newDetails;
-        appData.tripDays[dayIndex].maps = newMaps;
-        
+        if (details.length === 0) { alert('請至少保留一個行程項目'); return; }
+        appData.tripDays[dayIdx].times = times;
+        appData.tripDays[dayIdx].details = details;
+        appData.tripDays[dayIdx].maps = maps;
         renderItinerary();
         autoSave();
       };
 
-      // ---------- 行程渲染 ----------
       function renderItinerary() {
-        const container = document.getElementById('daysContainer');
-        if (!container) return;
-        container.innerHTML = appData.tripDays.map((day, idx) => {
-          const isOpen = appData.itineraryOpen[idx] || false;
-          return `
-            <div class="day-card">
-              <div class="day-header" data-dayidx="${idx}">
-                <span class="day-title">📌 ${day.date} ${day.title}</span>
-                <span class="weather-tag loading">🌡️ 載入中...</span>
-              </div>
-              <div class="trip-details" style="display:${isOpen ? 'block' : 'none'};">
-                ${day.details.map((d, i) => {
-                  const timeText = (day.times && day.times[i]) ? day.times[i] : '';
-                  let mapLink = '';
-                  if (day.maps && day.maps[i]) {
-                    mapLink = `<a class="map-link" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(day.maps[i])}" target="_blank">🗺️</a>`;
-                  }
-                  return `
-                    <div class="timeline-item">
-                      <span class="item-time">${timeText || '全天'}</span>
-                      <span class="item-desc">${d} ${mapLink}</span>
-                    </div>
-                  `;
-                }).join('')}
-                <div style="margin-top:6px; font-style:italic; color:#c94b6c; font-size:12px;">🚶‍♀️ 交通：請依出口指標移動</div>
-                <button class="edit-btn" onclick="window.triggerEdit(${idx})">✏️ 修改行程</button>
-              </div>
+        const c = document.getElementById('daysContainer');
+        if (!c) return;
+        c.innerHTML = appData.tripDays.map((day, idx) => {
+          const open = appData.itineraryOpen[idx] || false;
+          return `<div class="day-card">
+            <div class="day-header" data-dayidx="${idx}">
+              <span class="day-title">📌 ${day.date} ${day.title}</span>
+              <span class="weather-tag loading">🌡️ 載入中...</span>
             </div>
-          `;
+            <div class="trip-details" style="display:${open?'block':'none'};">
+              ${day.details.map((d,i) => {
+                const time = (day.times&&day.times[i])?day.times[i]:'';
+                const mapLink = (day.maps&&day.maps[i])?`<a class="map-link" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(day.maps[i])}" target="_blank">🗺️</a>`:'';
+                return `<div class="timeline-item"><span class="item-time">${time||'全天'}</span><span class="item-desc">${d} ${mapLink}</span></div>`;
+              }).join('')}
+              <div style="margin-top:6px;font-style:italic;color:#c94b6c;font-size:12px;">🚶‍♀️ 交通：請依出口指標移動</div>
+              <button class="edit-btn" onclick="window.triggerEdit(${idx})">✏️ 修改行程</button>
+            </div>
+          </div>`;
         }).join('');
-
-        document.querySelectorAll('.day-header').forEach(header => {
-          header.addEventListener('click', (e) => {
-            const idx = header.dataset.dayidx;
+        document.querySelectorAll('.day-header').forEach(h => {
+          h.addEventListener('click', (e) => {
+            const idx = h.dataset.dayidx;
             appData.itineraryOpen[idx] = !appData.itineraryOpen[idx];
             renderItinerary();
             updateItineraryWeather();
             autoSave();
           });
         });
-
         updateItineraryWeather();
       }
+      window.triggerEdit = (idx) => enableEditMode(idx);
 
-      window.triggerEdit = function(dayIndex) {
-        enableEditMode(dayIndex);
-      };
-
-      // ---------- 交通渲染 ----------
+      // ---------- 交通 ----------
       function renderTransport() {
-        const container = document.getElementById('transportContainer');
-        if (!container) return;
-        container.innerHTML = appData.transportData.map((t, idx) => `
+        const c = document.getElementById('transportContainer');
+        if (!c) return;
+        c.innerHTML = appData.transportData.map(t => `
           <div class="day-card">
             <div class="day-title" style="margin-bottom:10px;">
               ${t.title}
               ${t.map ? `<a class="map-link" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(t.map)}" target="_blank">🗺️</a>` : ''}
             </div>
             ${t.hasSeparator ? 
-              (t.optionsPart1 || []).map(o => `<div class="transport-option">${o}</div>`).join('') + 
+              (t.optionsPart1||[]).map(o=>`<div class="transport-option">${o}</div>`).join('') + 
               '<div class="transport-separator">👜🛒👜🛒👜🛒👜🛒👜🛒👜🛒</div>' + 
-              (t.optionsPart2 || []).map(o => `<div class="transport-option">${o}</div>`).join('')
-              : 
-              t.options.map(o => `<div class="transport-option">${o}</div>`).join('')
+              (t.optionsPart2||[]).map(o=>`<div class="transport-option">${o}</div>`).join('')
+              : t.options.map(o=>`<div class="transport-option">${o}</div>`).join('')
             }
-            ${t.ps ? `<div class="transport-ps">${t.ps}</div>` : ''}
+            ${t.ps?`<div class="transport-ps">${t.ps}</div>`:''}
           </div>
         `).join('');
       }
 
-      // ---------- 備忘渲染 ----------
+      // ---------- 備忘 ----------
       function renderMemos() {
-        const container = document.getElementById('memoContainer');
-        if (!container) return;
-        const memos = appData.memos || { Rachel: {title:'Rachel',content:''}, Kingsley: {title:'Kingsley',content:''}, Mandy: {title:'Mandy',content:''}, Charles: {title:'Charles',content:''} };
-        container.innerHTML = Object.entries(memos).map(([key, memo]) => {
-          const isOpen = appData.memoOpen && appData.memoOpen[key] || false;
-          return `
-            <div class="day-card">
-              <div class="day-header" data-memokey="${key}">
-                <span class="day-title">📝 ${memo.title || key}</span>
-              </div>
-              <div class="trip-details" style="display:${isOpen ? 'block' : 'none'};">
-                <div style="white-space:pre-wrap; font-size:13px; color:#4a2c38;">${memo.content || '（未有內容）'}</div>
-                <button class="edit-btn" onclick="window.editMemo('${key}')">✏️ 編輯備忘</button>
-              </div>
+        const c = document.getElementById('memoContainer');
+        if (!c) return;
+        const memos = appData.memos || DEFAULT_MEMOS;
+        c.innerHTML = Object.entries(memos).map(([key, memo]) => {
+          const open = (appData.memoOpen && appData.memoOpen[key]) || false;
+          return `<div class="day-card">
+            <div class="day-header" data-memokey="${key}">
+              <span class="day-title">📝 ${memo.title || key}</span>
             </div>
-          `;
+            <div class="trip-details" style="display:${open?'block':'none'};">
+              <div style="white-space:pre-wrap;font-size:13px;color:#4a2c38;">${memo.content || '（未有內容）'}</div>
+              <button class="edit-btn" onclick="window.editMemo('${key}')">✏️ 編輯備忘</button>
+            </div>
+          </div>`;
         }).join('');
-
-        document.querySelectorAll('#memoContainer .day-header').forEach(header => {
-          header.addEventListener('click', (e) => {
-            const key = header.dataset.memokey;
+        document.querySelectorAll('#memoContainer .day-header').forEach(h => {
+          h.addEventListener('click', (e) => {
+            const key = h.dataset.memokey;
             if (!appData.memoOpen) appData.memoOpen = {};
             appData.memoOpen[key] = !appData.memoOpen[key];
             renderMemos();
@@ -1109,45 +988,38 @@
         });
       }
 
-      window.editMemo = function(key) {
-        if (!appData.memos) appData.memos = { R:{title:'R',content:''}, K:{title:'K',content:''}, M:{title:'M',content:''}, C:{title:'C',content:''} };
-        const memo = appData.memos[key] || { title: key, content: '' };
+      window.editMemo = (key) => {
+        const memos = appData.memos || DEFAULT_MEMOS;
+        const memo = memos[key] || { title: key, content: '' };
         const newContent = prompt(`編輯備忘：${memo.title}`, memo.content || '');
         if (newContent !== null) {
           memo.content = newContent;
-          appData.memos[key] = memo;
+          memos[key] = memo;
+          appData.memos = memos;
           renderMemos();
           autoSave();
         }
       };
 
-      // ---------- 記帳邏輯 ----------
+      // ---------- 記帳 ----------
       function updatePayerOptions() {
         const count = parseInt(document.getElementById('peopleCount').value) || 2;
-        const payerSelect = document.getElementById('payerSelect');
-        const people = appData.people.slice(0, count);
-        payerSelect.innerHTML = people.map(p => `<option value="${p}">${p}</option>`).join('');
+        const sel = document.getElementById('payerSelect');
+        const ppl = appData.people.slice(0, count);
+        sel.innerHTML = ppl.map(p => `<option value="${p}">${p}</option>`).join('');
         renderCustomInputs();
       }
-
       function renderCustomInputs() {
         const mode = document.getElementById('splitMode').value;
         const count = parseInt(document.getElementById('peopleCount').value) || 2;
         const container = document.getElementById('customAmounts');
         if (mode === 'custom') {
-          const people = appData.people.slice(0, count);
           container.style.display = 'block';
-          container.innerHTML = people.map(p => `
-            <div class="flex-row" style="margin-bottom:4px;">
-              <span style="width:30px;">${p}</span>
-              <input type="number" class="custom-amount" data-person="${p}" placeholder="金額" step="1" style="flex:1;">
-            </div>
+          container.innerHTML = appData.people.slice(0,count).map(p => `
+            <div class="flex-row" style="margin-bottom:4px;"><span style="width:30px;">${p}</span><input type="number" class="custom-amount" data-person="${p}" placeholder="金額" step="1" style="flex:1;"></div>
           `).join('');
-        } else {
-          container.style.display = 'none';
-        }
+        } else { container.style.display = 'none'; }
       }
-
       function addExpense() {
         const name = document.getElementById('expenseName').value.trim();
         const total = parseFloat(document.getElementById('totalAmount').value);
@@ -1156,129 +1028,89 @@
         const payer = document.getElementById('payerSelect').value;
         const mode = document.getElementById('splitMode').value;
         if (!name || isNaN(total) || total <= 0) return alert('請填寫名稱與金額');
-
         let splits = {};
-        const peopleList = appData.people.slice(0, peopleCount);
+        const ppl = appData.people.slice(0, peopleCount);
         if (mode === 'equal') {
-          const perPerson = Math.floor(total / peopleCount);
-          peopleList.forEach(p => splits[p] = perPerson);
+          const per = Math.floor(total / peopleCount);
+          ppl.forEach(p => splits[p] = per);
         } else {
-          const inputs = document.querySelectorAll('.custom-amount');
-          inputs.forEach(inp => {
-            const person = inp.dataset.person;
-            const val = parseFloat(inp.value) || 0;
-            splits[person] = val;
+          document.querySelectorAll('.custom-amount').forEach(inp => {
+            splits[inp.dataset.person] = parseFloat(inp.value) || 0;
           });
         }
-
-        const expense = {
-          id: Date.now(),
-          name, total, currency, payer, mode, splits, peopleCount, timestamp: new Date().toISOString()
-        };
-        appData.expenses.push(expense);
+        appData.expenses.push({ id: Date.now(), name, total, currency, payer, mode, splits, peopleCount, timestamp: new Date().toISOString() });
         renderExpenses();
         autoSave();
-        clearExpenseForm();
-      }
-
-      function clearExpenseForm() {
         document.getElementById('expenseName').value = '';
         document.getElementById('totalAmount').value = '';
       }
-
-      function toggleSettle(id) {
-        appData.settledItems[id] = !appData.settledItems[id];
-        renderExpenses();
-        autoSave();
-      }
-
-      function deleteExpense(id) {
-        appData.expenses = appData.expenses.filter(e => e.id !== id);
-        delete appData.settledItems[id];
-        renderExpenses();
-        autoSave();
-      }
-
+      function toggleSettle(id) { appData.settledItems[id] = !appData.settledItems[id]; renderExpenses(); autoSave(); }
+      function deleteExpense(id) { appData.expenses = appData.expenses.filter(e=>e.id!==id); delete appData.settledItems[id]; renderExpenses(); autoSave(); }
       function renderExpenses() {
         const list = document.getElementById('expenseList');
         if (!list) return;
-        list.innerHTML = appData.expenses.map(exp => {
-          const settled = appData.settledItems[exp.id];
-          return `
-            <div class="expense-card ${settled ? 'settled-line' : ''}">
-              <div><strong>${exp.name}</strong> (${exp.currency}) 總額: ${exp.total}</div>
-              <div>👤 付款: ${exp.payer} | ${exp.mode === 'equal' ? '人均' : '分開付'}</div>
-              <div class="flex-row" style="justify-content:space-between;">
-                <button onclick="window.toggleSettle(${exp.id})">${settled ? '✅已結清' : '⬜ 未結'}</button>
-                <button onclick="window.deleteExpense(${exp.id})" style="background:#e0b0b0;">🗑️</button>
-              </div>
+        list.innerHTML = appData.expenses.map(exp => `
+          <div class="expense-card ${appData.settledItems[exp.id]?'settled-line':''}">
+            <div><strong>${exp.name}</strong> (${exp.currency}) 總額: ${exp.total}</div>
+            <div>👤 付款: ${exp.payer} | ${exp.mode==='equal'?'人均':'分開付'}</div>
+            <div class="flex-row" style="justify-content:space-between;">
+              <button onclick="window.toggleSettle(${exp.id})">${appData.settledItems[exp.id]?'✅已結清':'⬜ 未結'}</button>
+              <button onclick="window.deleteExpense(${exp.id})" style="background:#e0b0b0;">🗑️</button>
             </div>
-          `;
-        }).join('');
+          </div>
+        `).join('');
       }
-
       function calculateFinal() {
         const rate = appData.rate;
-        let balance = {};
-        appData.people.forEach(p => balance[p] = 0);
-
+        const bal = {};
+        appData.people.forEach(p => bal[p] = 0);
         appData.expenses.forEach(exp => {
           if (appData.settledItems[exp.id]) return;
-          const payer = exp.payer;
-          balance[payer] = (balance[payer] || 0) + exp.total;
-          Object.entries(exp.splits).forEach(([person, amount]) => {
-            balance[person] = (balance[person] || 0) - amount;
-          });
+          bal[exp.payer] = (bal[exp.payer]||0) + exp.total;
+          Object.entries(exp.splits).forEach(([p,amt]) => bal[p] = (bal[p]||0) - amt);
         });
-
-        return balance;
+        return bal;
       }
-
       function showFinalSummary() {
-        const balance = calculateFinal();
+        const bal = calculateFinal();
         const rate = appData.rate;
-        const summaryDiv = document.getElementById('finalSummary');
-        if (!summaryDiv) return;
+        const div = document.getElementById('finalSummary');
+        if (!div) return;
         let html = '<div><strong>🧾 最終結算 (未結清項目)</strong></div>';
-        const entries = Object.entries(balance);
-        if (entries.length === 0) { html += '<div>無待結算項目</div>'; }
-        entries.forEach(([person, amount]) => {
-          const jpy = Math.round(amount);
-          const hkd = (amount * rate).toFixed(2);
-          html += `<div>${person}: ${amount >= 0 ? '收' : '付'} ${Math.abs(jpy)}日圓 (約HK$${Math.abs(hkd)})</div>`;
+        const entries = Object.entries(bal);
+        if (!entries.length) html += '<div>無待結算項目</div>';
+        else entries.forEach(([p,amt]) => {
+          const jpy = Math.round(amt);
+          html += `<div>${p}: ${amt>=0?'收':'付'} ${Math.abs(jpy)}日圓 (約HK$${Math.abs(jpy*rate).toFixed(2)})</div>`;
         });
-
         html += '<hr><div>💞 付款建議：</div>';
-        const people = appData.people;
-        for (let i = 0; i < people.length; i++) {
-          for (let j = i + 1; j < people.length; j++) {
-            const a = people[i], b = people[j];
-            const diff = (balance[a] || 0) - (balance[b] || 0);
-            if (Math.abs(diff) > 0.5) {
-              const payerPerson = diff > 0 ? b : a;
-              const receiver = diff > 0 ? a : b;
-              const amount = Math.abs(diff);
-              html += `<div>💖 ${payerPerson} 應付 ${receiver} ${Math.round(amount)}日圓 (HK$${(amount * rate).toFixed(2)})</div>`;
+        const ppl = appData.people;
+        for (let i=0;i<ppl.length;i++) {
+          for (let j=i+1;j<ppl.length;j++) {
+            const a=ppl[i],b=ppl[j];
+            const diff = (bal[a]||0)-(bal[b]||0);
+            if (Math.abs(diff)>0.5) {
+              const payer = diff>0?b:a, receiver = diff>0?a:b;
+              const amt = Math.abs(diff);
+              html += `<div>💖 ${payer} 應付 ${receiver} ${Math.round(amt)}日圓 (HK$${(amt*rate).toFixed(2)})</div>`;
             }
           }
         }
-        summaryDiv.innerHTML = html;
+        div.innerHTML = html;
       }
-
       function convertCurrency() {
-        const rate = parseFloat(document.getElementById('rateInput').value) || 0.052;
+        const rate = parseFloat(document.getElementById('rateInput').value)||0.052;
         appData.rate = rate;
         const jpy = parseFloat(document.getElementById('jpyInput').value);
         const hkd = parseFloat(document.getElementById('hkdInput').value);
-        if (!isNaN(jpy)) document.getElementById('hkdInput').value = (jpy * rate).toFixed(2);
-        else if (!isNaN(hkd)) document.getElementById('jpyInput').value = (hkd / rate).toFixed(0);
+        if (!isNaN(jpy)) document.getElementById('hkdInput').value = (jpy*rate).toFixed(2);
+        else if (!isNaN(hkd)) document.getElementById('jpyInput').value = (hkd/rate).toFixed(0);
         autoSave();
       }
 
-      // ---------- 初始化 ----------
-      window.onload = function () {
+      // ---------- 啟動 ----------
+      window.onload = () => {
         loadFromStorage();
-        
         downloadFromCloud(false).then(() => {
           renderItinerary();
           renderTransport();
@@ -1287,9 +1119,7 @@
           renderExpenses();
           document.getElementById('rateInput').value = appData.rate;
         });
-
         document.getElementById('manualSyncBtn').addEventListener('click', manualSync);
-
         document.querySelectorAll('.nav-btn').forEach(btn => {
           btn.addEventListener('click', (e) => {
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -1298,26 +1128,17 @@
             document.getElementById(btn.dataset.section).classList.add('active');
           });
         });
-
         document.getElementById('peopleCount').addEventListener('change', updatePayerOptions);
         document.getElementById('splitMode').addEventListener('change', renderCustomInputs);
         document.getElementById('addExpenseBtn').addEventListener('click', addExpense);
         document.getElementById('settleAllBtn').addEventListener('click', showFinalSummary);
         document.getElementById('convertBtn').addEventListener('click', convertCurrency);
-        document.getElementById('rateInput').addEventListener('change', (e) => { appData.rate = parseFloat(e.target.value); autoSave(); });
-
+        document.getElementById('rateInput').addEventListener('change', e => { appData.rate = parseFloat(e.target.value); autoSave(); });
         window.toggleSettle = toggleSettle;
         window.deleteExpense = deleteExpense;
-
         document.querySelectorAll('input, select').forEach(el => el.addEventListener('change', autoSave));
-
-        setInterval(() => {
-          downloadFromCloud(false);
-        }, SYNC_INTERVAL);
-        
-        window.addEventListener('beforeunload', () => {
-          uploadToCloud();
-        });
+        setInterval(() => downloadFromCloud(false), SYNC_INTERVAL);
+        window.addEventListener('beforeunload', () => uploadToCloud());
       };
     })();
   </script>
